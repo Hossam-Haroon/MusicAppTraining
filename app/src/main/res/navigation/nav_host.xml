@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_host.xml"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.musicapptraining.ui.homeFragment.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment"
+            app:destination="@id/artistsAndAlbumsAndPlaylistsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_songInfoFragment"
+            app:destination="@id/songInfoFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_addNewPlayListFragment"
+            app:destination="@id/addNewPlayListFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_scanLocalAudiosFromDeviceFragment"
+            app:destination="@id/scanLocalAudiosFromDeviceFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/artistsAndAlbumsAndPlaylistsFragment"
+        android:name="com.example.musicapptraining.ui.artistsAndAlbumsFragment.ArtistsAndAlbumsAndPlaylistsFragment"
+        android:label="fragment_artists_and_albums_and_playlists"
+        tools:layout="@layout/fragment_artists_and_albums_and_playlists" >
+        <argument
+            android:name="artistName"
+            app:argType="string" />
+        <argument
+            android:name="albumName"
+            app:argType="string" />
+        <argument
+            android:name="playListName"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/songInfoFragment"
+        android:name="com.example.musicapptraining.ui.songInfoFragment.SongInfoFragment"
+        android:label="fragment_song_info"
+        tools:layout="@layout/fragment_song_info" >
+        <argument
+            android:name="song"
+            app:argType="com.example.musicapptraining.data.model.Song" />
+    </fragment>
+    <fragment
+        android:id="@+id/addNewPlayListFragment"
+        android:name="com.example.musicapptraining.ui.newPlayList.AddNewPlayListFragment"
+        android:label="fragment_add_new_play_list"
+        tools:layout="@layout/fragment_add_new_play_list" />
+    <fragment
+        android:id="@+id/scanLocalAudiosFromDeviceFragment"
+        android:name="com.example.musicapptraining.ui.scanLocalAudiosfromDevice.ScanLocalAudiosFromDeviceFragment"
+        android:label="fragment_scan_local_audios_from_device"
+        tools:layout="@layout/fragment_scan_local_audios_from_device" />
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.musicapptraining.ui.searchFragment.SearchFragment"
+        android:label="fragment_search"
+        tools:layout="@layout/fragment_search" >
+        <action
+            android:id="@+id/action_searchFragment_to_artistsAndAlbumsAndPlaylistsFragment"
+            app:destination="@id/artistsAndAlbumsAndPlaylistsFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_searchMoreButtonFragment"
+            app:destination="@id/searchMoreButtonFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/searchMoreButtonFragment"
+        android:name="com.example.musicapptraining.ui.searchMoreButtonFragment.SearchMoreButtonFragment"
+        android:label="fragment_search_more_button"
+        tools:layout="@layout/fragment_search_more_button" >
+        <argument
+            android:name="songList"
+            app:argType="com.example.musicapptraining.data.model.Song[]" />
+        <argument
+            android:name="artistList"
+            app:argType="com.example.musicapptraining.data.model.Artist[]" />
+        <argument
+            android:name="albumList"
+            app:argType="com.example.musicapptraining.data.model.Album[]" />
+        <action
+            android:id="@+id/action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment"
+            app:destination="@id/artistsAndAlbumsAndPlaylistsFragment" />
+    </fragment>
+</navigation>
