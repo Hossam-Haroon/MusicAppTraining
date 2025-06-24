@@ -38,7 +38,7 @@ class SongsFragment : Fragment(R.layout.fragment_songs), OnOptionSelected {
     private lateinit var binding: FragmentSongsBinding
     private lateinit var adapter: SongAdapter
 
-    private val viewModel: SongsViewModel by viewModels()
+    private val songsViewModel: SongsViewModel by viewModels()
     private val playerViewModel: MusicPlayerViewModel by activityViewModels()
 
     private var permissionContinuation: Continuation<Boolean>? = null
@@ -72,13 +72,13 @@ class SongsFragment : Fragment(R.layout.fragment_songs), OnOptionSelected {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setAdapter()
+        setAdapterForListOfSongs()
 
         lifecycleScope.launch {
             if (requestReadExternalStoragePermission()) {
-                viewModel.fetchAllMusic()
+                songsViewModel.fetchAllMusic()
 
-                viewModel.songListState.collect { uiState ->
+                songsViewModel.songListState.collect { uiState ->
                     when (uiState) {
                         is UiState.Error -> {
                             Log.e("Error", "Error fetching songs: ${uiState.message}")
@@ -131,7 +131,7 @@ class SongsFragment : Fragment(R.layout.fragment_songs), OnOptionSelected {
 
     }
 
-    private fun setAdapter() {
+    private fun setAdapterForListOfSongs() {
         adapter = SongAdapter()
         binding.songsRv.adapter = adapter
         binding.songsRv.layoutManager = LinearLayoutManager(context)

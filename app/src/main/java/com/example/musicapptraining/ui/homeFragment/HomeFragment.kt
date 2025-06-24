@@ -8,12 +8,14 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.core.net.toUri
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.musicapptraining.R
 import com.example.musicapptraining.ViewPagerAdapter
 import com.example.musicapptraining.databinding.FragmentHomeBinding
-import com.example.musicapptraining.ui.albumFragment.AlbumFragment
+import com.example.musicapptraining.ui.BaseFragment
 import com.example.musicapptraining.ui.artistFragment.ArtistFragment
 import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.playedSongBottomSheet.PlayedSongBottomSheet
@@ -25,9 +27,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
 
-    private lateinit var binding : FragmentHomeBinding
+    //private lateinit var binding : FragmentHomeBinding
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     val playerViewModel : MusicPlayerViewModel by activityViewModels()
 
@@ -36,53 +38,56 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     }
 
-    override fun onCreateView(
+    /*override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
-    }
+    }*/
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val fragmentList = listOf(
-            SongsFragment(),
-            ArtistFragment(),
-           // AlbumFragment(),
-            PlaylistFragment()
+            SongsFragment() to SONGS,
+            ArtistFragment() to ARTISTS,
+            PlaylistFragment() to PLAYLISTS
         )
 
-        // Titles for the tabs
-        val fragmentTitles = listOf(
-            "Songs",
-            "Artists",
-            //"Albums",
-            "Playlists"
-        )
+        val fragmentInstances = fragmentList.map { it.first }
+        val fragmentTitles = fragmentList.map { it.second }
 
-        viewPagerAdapter = ViewPagerAdapter(this@HomeFragment,fragmentList,fragmentTitles)
+        viewPagerAdapter = ViewPagerAdapter(
+            this@HomeFragment,
+            fragmentInstances,
+            fragmentTitles
+        )
         binding.vpViewPager.adapter = viewPagerAdapter
         TabLayoutMediator(binding.tlButtons,binding.vpViewPager){tab, position->
             tab.text = fragmentTitles[position]
         }.attach()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            playerViewModel.currentSong.collect{song->
-                binding.apply {
-                tvSongName.text = song.songName
-                tvArtistName.text = song.songArtist
-                ivSongImage.setImageURI(song.songArt?.toUri())
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
+                launch {
+                    playerViewModel.currentSong.collect{song->
+                        binding.apply {
+                            tvSongName.text = song.songName
+                            tvArtistName.text = song.songArtist
+                            ivSongImage.setImageURI(song.songArt?.toUri())
+                        }
+                    }
                 }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch{
-            playerViewModel.isPausePlayClicked.collect{state->
-                if (state){
-                   binding.ivPlayPause.setImageResource(R.drawable.play_svgrepo_com)
-                }else{
-                    binding.ivPlayPause.setImageResource(R.drawable.pause_svgrepo_com)
+
+                launch {
+                    playerViewModel.isPausePlayClicked.collect{state->
+                        if (state){
+                            binding.ivPlayPause.setImageResource(R.drawable.play_svgrepo_com)
+                        }else{
+                            binding.ivPlayPause.setImageResource(R.drawable.pause_svgrepo_com)
+                        }
+                    }
                 }
             }
         }
@@ -90,15 +95,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.apply {
             tvSongName.setOnClickListener {
                 playerViewModel.getEvent(
-                    PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(playerViewModel.currentSong.value.songId)
+                    PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(
+                        playerViewModel.currentSong.value.songId
+                    )
                 )
                 val bottomSheetSong = PlayedSongBottomSheet(playerViewModel.currentSong.value)
                 parentFragmentManager.let { bottomSheetSong.show(it,bottomSheetSong.tag) }
             }
 
-
             ibMore.setOnClickListener {
-                showMenu(it)
+                showMenuForMoreOptions(it)
             }
             ibSearch.setOnClickListener {
                 findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
@@ -107,29 +113,24 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 playerViewModel.getEvent(PlayerEvents.Next)
             }
             ivPlayPause.setOnClickListener {
-                if (playerViewModel.isPausePlayClicked.value){
-                    ivPlayPause.setImageResource(R.drawable.play_svgrepo_com)
-                }else{
-                    ivPlayPause.setImageResource(R.drawable.pause_svgrepo_com)
-                }
-
                 playerViewModel.getEvent(PlayerEvents.PausePlay)
             }
         }
 
     }
 
-    private fun showMenu(view : View){
+    private fun showMenuForMoreOptions(view : View){
         val popupMenu = PopupMenu(context, view)
         popupMenu.menuInflater.inflate(R.menu.menu_items, popupMenu.menu)
         popupMenu.setOnMenuItemClickListener {item->
             when(item.itemId){
                 R.id.find_local_songs -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_scanLocalAudiosFromDeviceFragment)
+                    findNavController().navigate(
+                        R.id.action_homeFragment_to_scanLocalAudiosFromDeviceFragment
+                    )
                     true
                 }
                 R.id.settings ->{
-
                     true
                 }
 
@@ -140,8 +141,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         popupMenu.show()
     }
 
-
-
-
-
+    companion object{
+        const val SONGS = "Songs"
+        const val ARTISTS = "Artists"
+        const val PLAYLISTS = "Playlists"
+    }
 }
