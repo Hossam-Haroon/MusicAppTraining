@@ -2,6 +2,7 @@ package com.example.musicapptraining.ui.musicPlayer
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.exoplayer.ExoPlayer
@@ -58,7 +59,9 @@ class MusicPlayerViewModel
             _isShufflingClicked,viewModelScope,sharedPreferences,_currentMediaPositionInList)
 
     init {
+
         player.addListener(playerController)
+        Log.d("checkCurrentSong","${currentSong.value}")
         playerController.setupMediaNotification(context)
     }
     fun formatDuration(durationMs: Long): String {

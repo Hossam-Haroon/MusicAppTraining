@@ -36,11 +36,13 @@ class MoreButtonBottomSheet(val song : Song) : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.artistSongMoreButton.text = song.songArtist
-        binding.albumSongMoreButton.text = song.songAlbum
+        //binding.albumSongMoreButton.text = song.songAlbum
         binding.apply {
             artistSongMoreButton.setOnClickListener {
                 val bundle = Bundle().apply {
                         putString("artistName", song.songArtist)
+                        putString("albumName", "")
+                        putString("playListName", "")
                 }
                 findNavController().navigateUp()
                 findNavController().navigate(
@@ -49,7 +51,7 @@ class MoreButtonBottomSheet(val song : Song) : BottomSheetDialogFragment() {
                 )
                 dismiss()
             }
-            albumSongMoreButton.setOnClickListener {
+            /*albumSongMoreButton.setOnClickListener {
                 val bundle = Bundle().apply {
                     putString("artistName", song.songAlbum)
                 }
@@ -59,7 +61,7 @@ class MoreButtonBottomSheet(val song : Song) : BottomSheetDialogFragment() {
                     bundle
                 )
                 dismiss()
-            }
+            }*/
             playNextSongMoreButton.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.AddSongToPlayNext(song.songId))
                 Toast.makeText(requireContext(),"this song will play next", Toast.LENGTH_SHORT).show()
@@ -75,9 +77,13 @@ class MoreButtonBottomSheet(val song : Song) : BottomSheetDialogFragment() {
                 dismiss()
             }
             addToPlaylistSongMoreButton.setOnClickListener {
-                val addToPlayListBottomSheet = AddToPlayListBottomSheetFragment(song)
-                parentFragmentManager.let { addToPlayListBottomSheet.show(it,addToPlayListBottomSheet.tag) }
-                dismiss()
+                if (isAdded){
+                    val addToPlayListBottomSheet = AddToPlayListBottomSheetFragment(song)
+                    parentFragmentManager.let {
+                        addToPlayListBottomSheet.show(it, addToPlayListBottomSheet.tag)
+                    }
+                    dismiss()
+                }
             }
             shareSongMoreButton.setOnClickListener {
                 shareAudio()

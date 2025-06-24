@@ -1,6 +1,7 @@
 package com.example.musicapptraining.ui.searchMoreButtonFragment
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -49,21 +50,26 @@ class SearchMoreButtonFragment : Fragment() {
         songList = navArgs.songList
         artistList = navArgs.artistList
         albumList = navArgs.albumList
+        setAdapters()
+        try {
+            if (songList.isNotEmpty()){
+                binding.Rv.adapter = songAdapter
+                songAdapter.asyncListDiffer.submitList(songList.toList())
+                songAdapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
 
-        if (songList.isNotEmpty()){
-            setSongAdapter()
-            songAdapter.asyncListDiffer.submitList(songList.toList())
-            songAdapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-
-        }else if(artistList.isNotEmpty()){
-            setArtistsAdapter()
-            artistAdapter.asyncListDiffer.submitList(artistList.toList())
-            artistAdapter.asyncListDiffer.currentList.sortedByDescending { it.artistName }
-        }else if(albumList.isNotEmpty()){
-            setAlbumAdapter()
-            albumAdapter.asyncListDiffer.submitList(albumList.toList())
-            albumAdapter.asyncListDiffer.currentList.sortedByDescending { it.albumName }
+            }else if(artistList.isNotEmpty()){
+                binding.Rv.adapter = artistAdapter
+                artistAdapter.asyncListDiffer.submitList(artistList.toList())
+                artistAdapter.asyncListDiffer.currentList.sortedByDescending { it.artistName }
+            }else if(albumList.isNotEmpty()){
+                binding.Rv.adapter = albumAdapter
+                albumAdapter.asyncListDiffer.submitList(albumList.toList())
+                albumAdapter.asyncListDiffer.currentList.sortedByDescending { it.albumName }
+            }
+        }catch (e:Exception){
+            Log.d("checkSearchMore","${e.message}")
         }
+
 
 
 
@@ -84,20 +90,22 @@ class SearchMoreButtonFragment : Fragment() {
         artistAdapter.setOnItemClickListener {
             val bundle = Bundle().apply {
                 putString("artistName",it.artistName)
+                putString("playListName","")
+                putString("albumName","")
             }
             findNavController().navigate(
                 R.id.action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
             )
 
         }
-        albumAdapter.setOnItemClickListener { album ->
+       /* albumAdapter.setOnItemClickListener { album ->
             val bundle = Bundle().apply {
                 putString("albumName",album.albumName)
             }
             findNavController().navigate(
                 R.id.action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
             )
-        }
+        }*/
     }
 
     override fun onCreateView(
@@ -108,7 +116,7 @@ class SearchMoreButtonFragment : Fragment() {
         return binding.root
     }
 
-    private fun setSongAdapter() {
+    /*private fun setSongAdapter() {
         songAdapter = SongAdapter()
         binding.Rv.adapter = songAdapter
         binding.Rv.layoutManager = LinearLayoutManager(context)
@@ -122,8 +130,23 @@ class SearchMoreButtonFragment : Fragment() {
         albumAdapter = AlbumAdapter()
         binding.Rv.adapter = albumAdapter
         binding.Rv.layoutManager = LinearLayoutManager(context)
+    }*/
+
+    private fun setAdapters(){
+        songAdapter = SongAdapter()
+        artistAdapter = ArtistAdapter()
+        albumAdapter = AlbumAdapter()
+
+        binding.Rv.layoutManager = LinearLayoutManager(context)
+
+        // Set the adapter based on which list is not empty
+        when {
+            songList.isNotEmpty() -> binding.Rv.adapter = songAdapter
+            artistList.isNotEmpty() -> binding.Rv.adapter = artistAdapter
+            albumList.isNotEmpty() -> binding.Rv.adapter = albumAdapter
+        }
     }
-
-
-
 }
+
+
+

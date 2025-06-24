@@ -22,7 +22,6 @@ class MusicService: MediaSessionService() {
 
     override fun onDestroy() {
         stopSelf()
-        mediaSession.release()
         super.onDestroy()
 
     }

@@ -25,6 +25,9 @@
         <action
             android:id="@+id/action_homeFragment_to_searchFragment"
             app:destination="@id/searchFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_addNewArtist"
+            app:destination="@id/addNewArtist" />
     </fragment>
     <fragment
         android:id="@+id/artistsAndAlbumsAndPlaylistsFragment"
@@ -90,4 +93,8 @@
             android:id="@+id/action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment"
             app:destination="@id/artistsAndAlbumsAndPlaylistsFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/addNewArtist"
+        android:name="com.example.musicapptraining.ui.newArtist.AddNewArtistFragment"
+        android:label="AddNewArtist" />
 </navigation>

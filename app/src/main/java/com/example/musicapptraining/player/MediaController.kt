@@ -47,10 +47,11 @@ class MediaController(
             super.onMediaItemTransition(mediaItem, reason)
             currentMediaPosition.value = 0f
 
-            /*if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && songIdToPlayNext != "") {
+
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && songIdToPlayNext != "") {
                 getTrackIndexById(songIdToPlayNext)
                 songIdToPlayNext = ""
-
+            }
                 /*if (mediaItem != null) {
                     currentSong.value = toMusicItem(mediaItem)
                     saveFloatValue(player.currentMediaItemIndex.toFloat())
@@ -72,8 +73,9 @@ class MediaController(
             }*/
 
 
-            }*/
+           // }
             if (mediaItem != null){
+                currentMediaDurationInMinutes.value = player.duration
                 currentSong.value = toMusicItem(mediaItem)
                 saveFloatValue(player.currentMediaItemIndex.toFloat())
                 currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
@@ -107,13 +109,14 @@ class MediaController(
                 }
                 Player.STATE_READY -> {
                     isBufferingClicked.value = false
-                   // updateMediaInfo()
+                    //updateMediaInfo()
 
                 }
             }
         }
      fun updateMediaInfo() {
         player.currentMediaItem?.let { mediaItem ->
+
             currentSong.value = toMusicItem(mediaItem)
             duration = player.duration
             if (duration == C.TIME_UNSET) duration = 0
@@ -328,7 +331,7 @@ class MediaController(
             mediaItem.mediaMetadata.displayTitle.toString(),
             songPath,
             mediaItem.mediaMetadata.artist.toString(),
-            0,
+            currentMediaDurationInMinutes.value,
             mediaItem.mediaMetadata.albumTitle.toString(),
             0,
             mediaItem.mediaMetadata.artworkUri.toString(),

@@ -83,9 +83,13 @@ class PlayedSongBottomSheet(var song : Song): BottomSheetDialogFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             playerViewModel.currentSong.collect{ currentSong->
+                Log.d("checkCurrentSong","${currentSong}")
                 binding.apply {
                     songNameTv.text = playerViewModel.currentSong.value.songName
                     songArtistTv.text = playerViewModel.currentSong.value.songArtist
+                    Log.d("seekDuration",
+                        playerViewModel.formatDuration(playerViewModel.currentMediaDurationInMinutes.value)
+                    )
                     currentSongProgressTv.text =
                         playerViewModel.formatDuration(playerViewModel.currentMediaProgressionInMinutes.value)
                     fullSongLengthTv.text =
@@ -120,21 +124,6 @@ class PlayedSongBottomSheet(var song : Song): BottomSheetDialogFragment() {
 
             }
         }
-        viewLifecycleOwner.lifecycleScope.launch{
-            playerViewModel.currentMediaProgressionInMinutes.collect{
-                Log.d("checkprogressnow","${playerViewModel.currentMediaProgressionInMinutes.value}")
-                binding.currentSongProgressTv.text = playerViewModel.formatDuration(it)
-                binding.musicProgressSeekbar.progress = it.toInt()
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch{
-            playerViewModel.currentMediaDurationInMinutes.collect{
-                Log.d("checkdurationnow","${playerViewModel.currentMediaDurationInMinutes.value}")
-                binding.currentSongProgressTv.text = playerViewModel.formatDuration(it)
-                binding.musicProgressSeekbar.max = it.toInt()
-            }
-        }
-
 
         if(playerViewModel.isShufflingClicked.value){
             binding.playedModeImage.setImageResource(R.drawable.shuffle)
@@ -153,16 +142,20 @@ class PlayedSongBottomSheet(var song : Song): BottomSheetDialogFragment() {
                 }
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch{
+            playerViewModel.currentMediaProgressionInMinutes.collect{state->
+                binding.currentSongProgressTv.text =
+                    playerViewModel.formatDuration(state)
+                binding.musicProgressSeekbar.progress = state.toInt()
+            }
+        }
 
 
-        /*currentSongProgressTv.text =
-            playerViewModel.formatDuration(playerViewModel.currentMediaProgressionInMinutes.value)
-        fullSongLengthTv.text =
-            playerViewModel.formatDuration(playerViewModel.currentMediaDurationInMinutes.value)*/
+
 
         binding.apply {
-            currentSongProgressTv.text = playerViewModel.formatDuration(playerViewModel.currentMediaProgressionInMinutes.value)
-            fullSongLengthTv.text = playerViewModel.formatDuration(playerViewModel.currentMediaDurationInMinutes.value)
+            //currentSongProgressTv.text = playerViewModel.formatDuration(playerViewModel.currentMediaProgressionInMinutes.value)
+            //fullSongLengthTv.text = playerViewModel.formatDuration(playerViewModel.currentMediaDurationInMinutes.value)
             hideBottomSheetButton.setOnClickListener { dismiss() }
             moreButton.setOnClickListener {
                 val moreButtonBottomSheet = MoreButtonBottomSheet(playerViewModel.currentSong.value)

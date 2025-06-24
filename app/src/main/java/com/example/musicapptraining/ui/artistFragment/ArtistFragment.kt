@@ -56,6 +56,8 @@ class ArtistFragment : Fragment() {
         adapter.setOnItemClickListener {
             val bundle = Bundle().apply {
                 putString("artistName",it.artistName)
+                putString("albumName","")
+                putString("playListName","")
             }
             findNavController().navigate(
                 R.id.action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
@@ -64,7 +66,10 @@ class ArtistFragment : Fragment() {
             // also send the artist name to show his songs
         }
 
-        // click on artist lambda fun
+       /* binding.addPlaylistImage.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_addNewArtist)
+
+        }*/
 
     }
 

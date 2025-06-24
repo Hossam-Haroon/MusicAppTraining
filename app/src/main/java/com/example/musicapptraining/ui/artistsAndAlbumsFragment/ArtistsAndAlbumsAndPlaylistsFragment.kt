@@ -80,8 +80,8 @@ class ArtistsAndAlbumsAndPlaylistsFragment : Fragment(),OnOptionSelected {
             viewLifecycleOwner.lifecycleScope.launch {
                 artistAndAlbumViewModel.artistAudioList.collect{uiState->
                     when(uiState){
-                        is UiState.Error -> TODO()
-                        UiState.Loading -> TODO()
+                        is UiState.Error -> {}
+                        UiState.Loading -> {}
                         is UiState.Success ->{
                             binding.songsCountTv.text = uiState.data.artistSongs.size.toString()
                             adapter.asyncListDiffer.submitList(uiState.data.artistSongs)
@@ -97,8 +97,8 @@ class ArtistsAndAlbumsAndPlaylistsFragment : Fragment(),OnOptionSelected {
             viewLifecycleOwner.lifecycleScope.launch {
                 artistAndAlbumViewModel.playListAudioList.collect{uiState->
                     when(uiState){
-                        is UiState.Error -> TODO()
-                        UiState.Loading -> TODO()
+                        is UiState.Error -> {}
+                        UiState.Loading -> {}
                         is UiState.Success ->{
                             binding.songsCountTv.text = uiState.data.playlistSongs.size.toString()
                             adapter.asyncListDiffer.submitList(uiState.data.playlistSongs)

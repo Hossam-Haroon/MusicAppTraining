@@ -13,6 +13,7 @@ import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentAddToPlayListBottomSheetBinding
 import com.example.musicapptraining.ui.songsFragment.SongAdapter
 import com.example.musicapptraining.utilities.UiState
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -32,6 +33,11 @@ class AddToPlayListBottomSheetFragment(private val song : Song) : BottomSheetDia
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        val behavior = BottomSheetBehavior.from(bottomSheet!!)
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+
         setAdapter()
 
         viewLifecycleOwner.lifecycleScope.launch {

@@ -53,19 +53,19 @@ class PlaylistFragment : Fragment() {
         }
 
         adapter.setOnItemClickListener { playList ->
-            if (!playList.playlistName.isNotEmpty()){
-                val bundle = Bundle().apply {
-                    putString("playListName",playList.playlistName)
-                }
-                findNavController().navigate(
-                    R.id.action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment,
-                    bundle
-                )
-            }else{
-                Log.e("SongsFragment", "Playlist name is null or empty.")
+            try {
+                    val bundle = Bundle().apply {
+                        putString("playListName",playList.playlistName)
+                        putString("artistName","")
+                        putString("albumName","")
+                    }
+                    findNavController().navigate(
+                        R.id.action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment,
+                        bundle
+                    )
+            }catch (e:Exception){
+                Log.d("checkListErrors","${e.message}")
             }
-
-
         }
         /*binding.addPlaylistImage.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_addNewPlayListFragment)

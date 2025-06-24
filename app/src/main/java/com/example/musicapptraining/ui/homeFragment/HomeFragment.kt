@@ -16,6 +16,7 @@ import com.example.musicapptraining.databinding.FragmentHomeBinding
 import com.example.musicapptraining.ui.albumFragment.AlbumFragment
 import com.example.musicapptraining.ui.artistFragment.ArtistFragment
 import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
+import com.example.musicapptraining.ui.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.ui.playlistFragment.PlaylistFragment
 import com.example.musicapptraining.ui.songsFragment.SongsFragment
 import com.example.musicapptraining.utilities.PlayerEvents
@@ -87,7 +88,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         binding.apply {
-
+            tvSongName.setOnClickListener {
+                playerViewModel.getEvent(
+                    PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(playerViewModel.currentSong.value.songId)
+                )
+                val bottomSheetSong = PlayedSongBottomSheet(playerViewModel.currentSong.value)
+                parentFragmentManager.let { bottomSheetSong.show(it,bottomSheetSong.tag) }
+            }
 
 
             ibMore.setOnClickListener {

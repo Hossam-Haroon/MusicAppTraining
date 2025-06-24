@@ -33,14 +33,14 @@ class AddNewPlayListFragment : Fragment() {
 
         binding.btnConfirm.setOnClickListener {
          if (binding.editText.text.isNotEmpty()){
-            val playListName = binding.editText.text.toString()
-                playListViewModel.addNewPlayList(playListName)
+             val playListName = binding.editText.text.toString()
+             playListViewModel.addNewPlayList(playListName)
                 Toast.makeText(
                     requireContext(),
                     "your playList has been created",
                     Toast.LENGTH_LONG).show()
                 findNavController().navigateUp()
-            }else{
+         }else{
             Toast.makeText(
                 requireContext(),
                 "Please enter a name for your playList",

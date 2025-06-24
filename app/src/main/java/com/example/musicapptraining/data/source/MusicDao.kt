@@ -32,6 +32,9 @@ interface MusicDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllArtists(artists: List<Artist>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertArtist(artist: Artist)
+
     @Query("SELECT * FROM Artist WHERE artistName = :name")
     suspend fun getArtistByName(name : String): Artist
 //-------------------------------------------------------

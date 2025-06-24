@@ -4,6 +4,7 @@ import androidx.fragment.app.viewModels
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -35,7 +36,7 @@ class SearchFragment : Fragment() {
     private lateinit var binding : FragmentSearchBinding
     private lateinit var songAdapter: SongAdapter
     private lateinit var artistAdapter: ArtistAdapter
-    private lateinit var albumAdapter: AlbumAdapter
+    //private lateinit var albumAdapter: AlbumAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +46,7 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setSongAdapter()
         setArtistsAdapter()
-        setAlbumAdapter()
+        //setAlbumAdapter()
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.songListState.collect{uiState->
@@ -73,7 +74,7 @@ class SearchFragment : Fragment() {
 
             }
         }
-        viewLifecycleOwner.lifecycleScope.launch {
+        /*viewLifecycleOwner.lifecycleScope.launch {
             viewModel.albumListState.collect{uiState->
                 when(uiState){
                     is UiState.Error -> {}
@@ -85,7 +86,7 @@ class SearchFragment : Fragment() {
                 }
 
             }
-        }
+        }*/
 
         songAdapter.apply {
             setOnItemClickListener{song->
@@ -104,27 +105,34 @@ class SearchFragment : Fragment() {
         artistAdapter.setOnItemClickListener {
             val bundle = Bundle().apply {
                 putString("artistName",it.artistName)
+                putString("playListName","")
+                putString("albumName","")
             }
             findNavController().navigate(
                 R.id.action_searchFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
             )
 
         }
-        albumAdapter.setOnItemClickListener { album ->
+       /* albumAdapter.setOnItemClickListener { album ->
             val bundle = Bundle().apply {
                 putString("albumName",album.albumName)
             }
             findNavController().navigate(
                 R.id.action_searchFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
             )
-        }
+        }*/
         binding.songMoreTv.setOnClickListener {
-            val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
-                viewModel.songListState.value.toData()!!.toTypedArray(),
-                arrayOf(),
-                arrayOf()
-            )
-            findNavController().navigate(action)
+            try {
+                val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
+                    viewModel.songListState.value.toData()!!.toTypedArray(),
+                    arrayOf(),
+                    arrayOf()
+                )
+                findNavController().navigate(action)
+            }catch (e: Exception){
+                Log.e("SearchFragment", "Navigation error: ${e.message}")
+            }
+
         }
         binding.artistMoreTv.setOnClickListener {
             val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
@@ -134,7 +142,7 @@ class SearchFragment : Fragment() {
             )
             findNavController().navigate(action)
         }
-        binding.albumMoreTv.setOnClickListener {
+        /*binding.albumMoreTv.setOnClickListener {
             val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
                 arrayOf(),
                 arrayOf(),
@@ -142,7 +150,7 @@ class SearchFragment : Fragment() {
 
             )
             findNavController().navigate(action)
-        }
+        }*/
         binding.cancelButton.setOnClickListener {
             findNavController().navigateUp()
         }
@@ -157,10 +165,10 @@ class SearchFragment : Fragment() {
                     viewModel.getSearchedSongs(letter.toString())
                     viewModel.getSearchedArtists(letter.toString())
                     viewModel.getSearchedAlbums(letter.toString())
-                    binding.searchItemsGroup.visibility = View.VISIBLE
+                   // binding.searchItemsGroup.visibility = View.VISIBLE
                 }else{
                     viewModel.clearData()
-                    binding.searchItemsGroup.visibility = View.GONE
+                   // binding.searchItemsGroup.visibility = View.GONE
                 }
 
             }
@@ -192,9 +200,9 @@ class SearchFragment : Fragment() {
         binding.artistsRv.adapter = artistAdapter
         binding.artistsRv.layoutManager = LinearLayoutManager(context)
     }
-    private fun setAlbumAdapter() {
+   /* private fun setAlbumAdapter() {
         albumAdapter = AlbumAdapter()
         binding.albumsRv.adapter = albumAdapter
         binding.albumsRv.layoutManager = LinearLayoutManager(context)
-    }
+    }*/
 }

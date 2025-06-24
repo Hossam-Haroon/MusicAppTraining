@@ -12,6 +12,7 @@ import com.example.musicapptraining.data.source.MusicDao
 import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
@@ -138,5 +139,11 @@ class ArtistRepository @Inject constructor(
         }
 
 
+    }
+
+    fun insertArtist(artistName: String){
+        CoroutineScope(Dispatchers.IO).launch {
+            musicDao.insertArtist(Artist(artistName, mutableListOf()))
+        }
     }
 }

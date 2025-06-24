@@ -26,7 +26,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
-                android:hint="song , artist , album"
+                android:hint="song , artist "
                 android:maxLines="1"
                 android:textColorHint="#4DFFFFFF"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -138,8 +138,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/song_tv"
                 app:layout_constraintVertical_bias="0.0"
                 tools:listitem="@layout/songs_rv_item" />
-
-            <TextView
+           <!-- <TextView
                 android:id="@+id/album_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -181,12 +180,14 @@
                 tools:listitem="@layout/albums_rv_item" />
 
 
+
+
             <androidx.constraintlayout.widget.Group
                 android:id="@+id/search_items_group"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
-                app:constraint_referenced_ids="album_more_tv , album_tv , albumsRv , artist_tv , artist_more_tv , artistsRv , song_more_tv , songsRv , song_tv" />
+                app:constraint_referenced_ids="album_more_tv , album_tv , albumsRv , artist_tv , artist_more_tv , artistsRv , song_more_tv , songsRv , song_tv" />-->
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
