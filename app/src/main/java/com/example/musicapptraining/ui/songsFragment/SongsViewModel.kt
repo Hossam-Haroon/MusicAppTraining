@@ -16,10 +16,10 @@ class SongsViewModel @Inject constructor(
     private val songRepository: SongRepository
 ) : ViewModel() {
 
-    private var _songListState : MutableStateFlow<UiState<List<Song>>> = MutableStateFlow(UiState.Loading)
+    private var _songListState : MutableStateFlow<UiState<List<Song>>>
+    = MutableStateFlow(UiState.Loading)
 
     var songListState = _songListState.asStateFlow()
-
 
     fun fetchAllMusic(){
         viewModelScope.launch {
@@ -28,11 +28,6 @@ class SongsViewModel @Inject constructor(
             cachedAudio.collect{ resource->
                 _songListState.value = resource
         }
-
-
         }
     }
-
-
-
 }

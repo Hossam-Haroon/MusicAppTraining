@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.net.Uri
 import android.os.Build
-import android.provider.MediaStore
 import android.provider.MediaStore.Audio.Media
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -16,25 +16,18 @@ import com.example.musicapptraining.data.model.PlayList
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.data.source.MusicDao
 import com.example.musicapptraining.utilities.UiState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
-import java.io.File
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SongRepository @Inject constructor(
     val musicDao : MusicDao,
     val context : Context
 ) {
-
-   private var _audioList : MutableStateFlow<UiState<List<Song>>>  = MutableStateFlow(UiState.Loading)
-
-    fun getAllSongs(): Flow<UiState<List<Song>>>{
+     fun getAllSongs(): Flow<UiState<List<Song>>>{
         return flow {
             emit(UiState.Loading)
             val databaseSongs = musicDao.getAllSongs()
@@ -42,125 +35,21 @@ class SongRepository @Inject constructor(
                 emit(UiState.Success(databaseSongs))
                 return@flow
             }
-
-
             if (!isPermissionGranted()){
-                emit(UiState.Error("Permission is not allowed"))
+                emit(UiState.Error(PERMISSION_DISALLOWED))
                 return@flow
             }
-
             try {
-                fetchAllAudiosFromDevice()
-                coroutineScope {
-                    _audioList.collect{
-                        if (it is UiState.Success){
-                            musicDao.deleteSongs()
-                            musicDao.insertAllSongs(it.data)
-                            emit(it)
-                        }
-                    }
-
-                }
-
+                val fetchedSongs = fetchAllAudiosFromDevice()
+                    musicDao.deleteSongs()
+                    musicDao.insertAllSongs(fetchedSongs)
+                    emit(UiState.Success(fetchedSongs))
             }catch (e: Exception){
-                emit(UiState.Error("Error Fetching Music"))
+                emit(UiState.Error(ERROR_MESSAGE))
             }
         }.flowOn(Dispatchers.IO)
 
     }
-
-    fun getAlbumArtUri(albumId : Long): Uri?{
-        //  content://media/external/audio/albumart/{albumId}
-        return Uri.parse("content://media/external/audio/albumart").buildUpon()
-            .appendPath(albumId.toString()).build()
-    }
-
-    private fun fetchAllAudiosFromDevice() {
-        val files = mutableListOf<Song>()
-
-        CoroutineScope(Dispatchers.IO).launch {
-            _audioList.value = UiState.Loading
-            val projection = arrayOf(
-                Media._ID,
-                Media.DISPLAY_NAME,
-                Media.ALBUM,
-                Media.ARTIST,
-                Media.ALBUM_ID,
-                Media.DURATION,
-                Media.DATA,
-                Media.DATE_ADDED,
-                Media.MIME_TYPE
-            )
-
-            val selection =
-                "${Media.IS_MUSIC} != 0 AND (" + "${Media.MIME_TYPE} = 'audio/mpeg' OR " +
-                        "${Media.MIME_TYPE} = 'audio/mp4' OR " +
-                        "${Media.MIME_TYPE} = 'audio/aac' OR " +
-                        "${Media.MIME_TYPE} = 'audio/ogg')"
-            val contentResolver  = context.contentResolver
-            val sortOrder = "${Media.DATE_ADDED} DESC"
-            val cursor = contentResolver.query(
-                Media.EXTERNAL_CONTENT_URI,projection,selection,null,sortOrder)
-            cursor.use { cursor ->
-                while (cursor!!.moveToNext()){
-
-                    //val songPath =
-                       // cursor.getString(cursor.getColumnIndexOrThrow(Media.DATA))
-                   // val file = File(songPath)
-                    val songId =
-                        cursor.getString(cursor.getColumnIndexOrThrow(Media._ID))
-                    val artist =
-                        cursor.getString(cursor.getColumnIndexOrThrow(Media.ARTIST))
-                    val album =
-                        cursor.getString(cursor.getColumnIndexOrThrow(Media.ALBUM))
-                    val songName =
-                        cursor.getString(cursor.getColumnIndexOrThrow(Media.DISPLAY_NAME))
-                    val songDuration =
-                        cursor.getLong(cursor.getColumnIndexOrThrow(Media.DURATION))
-                    val albumId =
-                        cursor.getString(cursor.getColumnIndexOrThrow(Media.ALBUM_ID))
-                    val songMimeType =
-                        cursor.getLong(cursor.getColumnIndexOrThrow(Media.MIME_TYPE))
-                    val songDateAdded =
-                        cursor.getLong(cursor.getColumnIndexOrThrow(Media.DATE_ADDED))
-                    val songArt = getAlbumArtUri(albumId.toLong())
-                    val songUri = ContentUris.withAppendedId(Media.EXTERNAL_CONTENT_URI, songId.toLong())
-
-                    //val songUri = Uri.fromFile(file)
-                    val song =Song(
-                        songId,
-                        songName,
-                        songUri.toString(),
-                        artist,
-                        songDuration,
-                        album,
-                        songDateAdded,
-                        songArt.toString(),
-                        songMimeType.toString()
-                    )
-                    if (!song.songPath.contains("opus") && !song.songName.contains("AUD")){
-                        files.add(song)
-                    }else{
-                            Log.e("FileNotFound", "File not found: $songUri")
-
-                    }
-                }
-            }
-            _audioList.value = UiState.Success(files)
-        }
-    }
-
-    private fun isPermissionGranted(): Boolean {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_AUDIO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-        return ContextCompat.checkSelfPermission(
-            context, permission
-        ) ==PackageManager.PERMISSION_GRANTED
-    }
-
 
     fun searchSong(songName : String): Flow<UiState<List<Song>>> {
         return flow {
@@ -170,8 +59,7 @@ class SongRepository @Inject constructor(
                 emit(UiState.Success(searchedSongs))
                 return@flow
             }
-
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     fun getAlbumSongs(albumName : String): Flow<UiState<Album>>{
@@ -198,32 +86,132 @@ class SongRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    fun checkAndRefresh(): Flow<UiState<List<Song>>>{
-        return flow {
+    suspend fun checkAndRefresh(): UiState<List<Song>>{
             if (!isPermissionGranted()){
-                emit(UiState.Error("Permission is not allowed"))
-                return@flow
+                return UiState.Error(PERMISSION_DISALLOWED)
             }
-
-            try {
-                fetchAllAudiosFromDevice()
-                coroutineScope {
-                    _audioList.collect{
-                        if (it is UiState.Success){
-                            musicDao.deleteSongs()
-                            musicDao.insertAllSongs(it.data)
-                            emit(it)
-                        }
-                    }
-
-                }
-
+            return try{
+                val deviceSongs =  fetchAllAudiosFromDevice()
+                val localSongs = musicDao.getAllSongs()
+                val sortedDeviceSongs = deviceSongs.sortedBy { it.songId }
+                val sortedLocalSongs = localSongs.sortedBy { it.songId }
+                checkIfLocalDataBaseHasTheSameDataAsTheDevice(sortedLocalSongs, sortedDeviceSongs)
             }catch (e: Exception){
-                emit(UiState.Error("Error Fetching Music"))
+                 UiState.Error(e.localizedMessage ?: ERROR_MESSAGE)
             }
-        }.flowOn(Dispatchers.IO)
-
     }
 
+    private suspend fun checkIfLocalDataBaseHasTheSameDataAsTheDevice(
+        localSongs: List<Song>,
+        deviceSongs:List<Song>
+    ): UiState.Success<List<Song>> {
+       return if (localSongs != deviceSongs) {
+            musicDao.deleteSongs()
+            musicDao.insertAllSongs(deviceSongs)
+            UiState.Success(deviceSongs)
+        }else{
+            UiState.Success(localSongs)
+        }
+    }
 
+    private suspend fun fetchAllAudiosFromDevice(): List<Song> {
+        return withContext(Dispatchers.IO){
+            val audioFiles = mutableListOf<Song>()
+            val cursor = getCursorFromContentResolverAfterQueryingForTheRequiredAudios()
+            cursor.use {
+                while (it?.moveToNext() == true){
+                    val song = getSongDataFromCursorAndMakeAnInstanceOfSong(it)
+                    checkIfSongPathIsValidateAndAddItToTheListOfSongs(song,audioFiles)
+                }
+            }
+            return@withContext audioFiles
+        }
+    }
+    private fun getSongDataFromCursorAndMakeAnInstanceOfSong(cursor: Cursor):Song{
+        val songId =
+            cursor.getString(cursor.getColumnIndexOrThrow(Media._ID))
+        val artist =
+            cursor.getString(cursor.getColumnIndexOrThrow(Media.ARTIST))
+        val album =
+            cursor.getString(cursor.getColumnIndexOrThrow(Media.ALBUM))
+        val songName =
+            cursor.getString(cursor.getColumnIndexOrThrow(Media.DISPLAY_NAME))
+        val songDuration =
+            cursor.getLong(cursor.getColumnIndexOrThrow(Media.DURATION))
+        val albumId =
+            cursor.getString(cursor.getColumnIndexOrThrow(Media.ALBUM_ID))
+        val songMimeType =
+            cursor.getLong(cursor.getColumnIndexOrThrow(Media.MIME_TYPE))
+        val songDateAdded =
+            cursor.getLong(cursor.getColumnIndexOrThrow(Media.DATE_ADDED))
+        val songArt = getAlbumArtUri(albumId.toLong())
+        val songUri = ContentUris.withAppendedId(Media.EXTERNAL_CONTENT_URI, songId.toLong())
+        val song =Song(
+            songId,
+            songName,
+            songUri.toString(),
+            artist,
+            songDuration,
+            album,
+            songDateAdded,
+            songArt.toString(),
+            songMimeType.toString()
+        )
+        return song
+    }
+    private fun checkIfSongPathIsValidateAndAddItToTheListOfSongs(
+        song: Song,
+        songs:MutableList<Song>
+    ){
+        if (!song.songPath.contains(OPUS) && !song.songName.contains(AUD)){
+            songs.add(song)
+        }else {
+            Log.e(UNFOUNDED_FILE, "File not found: ${song.songPath}")
+        }
+    }
+    private fun getCursorFromContentResolverAfterQueryingForTheRequiredAudios(): Cursor? {
+        val projection = arrayOf(
+            Media._ID,
+            Media.DISPLAY_NAME,
+            Media.ALBUM,
+            Media.ARTIST,
+            Media.ALBUM_ID,
+            Media.DURATION,
+            Media.DATA,
+            Media.DATE_ADDED,
+            Media.MIME_TYPE
+        )
+        val selection =
+            "${Media.IS_MUSIC} != 0 AND (" + "${Media.MIME_TYPE} = 'audio/mpeg' OR " +
+                    "${Media.MIME_TYPE} = 'audio/mp4' OR " +
+                    "${Media.MIME_TYPE} = 'audio/aac' OR " +
+                    "${Media.MIME_TYPE} = 'audio/ogg')"
+        val contentResolver  = context.contentResolver
+        val sortOrder = "${Media.DATE_ADDED} DESC"
+        val cursor = contentResolver.query(
+            Media.EXTERNAL_CONTENT_URI,projection,selection,null,sortOrder)
+        return cursor
+    }
+    private fun getAlbumArtUri(albumId : Long): Uri?{
+        return Uri.parse(URI_STRING).buildUpon()
+            .appendPath(albumId.toString()).build()
+    }
+    private fun isPermissionGranted(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_AUDIO
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        return ContextCompat.checkSelfPermission(
+            context, permission
+        ) ==PackageManager.PERMISSION_GRANTED
+    }
+    companion object{
+        const val ERROR_MESSAGE = "Error Fetching Music"
+        const val PERMISSION_DISALLOWED = "Permission is not allowed"
+        const val URI_STRING = "content://media/external/audio/albumart"
+        const val UNFOUNDED_FILE = "File Not Found"
+        const val OPUS = "opus"
+        const val AUD = "AUD"
+    }
 }

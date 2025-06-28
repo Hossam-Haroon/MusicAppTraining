@@ -9,6 +9,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,16 +26,7 @@ class ScanLocalAudiosFromDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             _audioListState.value = UiState.Loading
             val checkedAudios = musicRepository.checkAndRefresh()
-            checkedAudios.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> Log.d("error",uiState.message)
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _audioListState.value = uiState
-                    }
-                }
-
-            }
+            _audioListState.value = checkedAudios
         }
 
     }

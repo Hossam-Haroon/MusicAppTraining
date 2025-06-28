@@ -1,6 +1,5 @@
 package com.example.musicapptraining.ui.songsFragment
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.AsyncListDiffer
@@ -10,29 +9,25 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.SongsRvItemBinding
 
-class SongAdapter(
-
-): RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
-    class SongViewHolder(val binding : SongsRvItemBinding): ViewHolder(binding.root) {
-
-    }
-
+class SongAdapter: RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
+    class SongViewHolder(val binding : SongsRvItemBinding): ViewHolder(binding.root)
 
     private val diffUtil = object :ItemCallback<Song>(){
         override fun areItemsTheSame(oldItem: Song, newItem: Song): Boolean {
             return oldItem.songId == newItem.songId
         }
-
         override fun areContentsTheSame(oldItem: Song, newItem: Song): Boolean {
             return oldItem == newItem
         }
-
     }
-
     val asyncListDiffer = AsyncListDiffer(this, diffUtil)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
-        val binding = SongsRvItemBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+        val binding = SongsRvItemBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
         return SongViewHolder(binding)
     }
 
@@ -55,10 +50,7 @@ class SongAdapter(
                 it(song)
             }
         }
-
-
     }
-
     var onClickListener : ((Song)-> Unit)? = null
 
     fun setOnItemClickListener(listener:(Song)-> Unit){
