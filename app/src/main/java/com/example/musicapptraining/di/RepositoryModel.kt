@@ -23,9 +23,11 @@ object RepositoryModel {
     fun songRepository(musicDao: MusicDao, @ApplicationContext context: Context): SongRepository{
         return SongRepository(musicDao,context)
     }
-
     @Provides
-    fun artistRepository(musicDao: MusicDao, @ApplicationContext context: Context): ArtistRepository{
+    fun artistRepository(
+        musicDao: MusicDao,
+        @ApplicationContext context: Context
+    ): ArtistRepository{
         return ArtistRepository(musicDao, context)
     }
     @Provides
@@ -33,7 +35,10 @@ object RepositoryModel {
         return AlbumRepository(musicDao, context)
     }
     @Provides
-    fun playlistRepository(musicDao: MusicDao, @ApplicationContext context: Context): PlayListRepository{
+    fun playlistRepository(
+        musicDao: MusicDao,
+        @ApplicationContext context: Context
+    ): PlayListRepository{
         return PlayListRepository(musicDao, context)
     }
 }

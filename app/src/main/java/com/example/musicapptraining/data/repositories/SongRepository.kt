@@ -17,9 +17,14 @@ import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.data.source.MusicDao
 import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -27,10 +32,11 @@ class SongRepository @Inject constructor(
     val musicDao : MusicDao,
     val context : Context
 ) {
+     @OptIn(ExperimentalCoroutinesApi::class)
      fun getAllSongs(): Flow<UiState<List<Song>>>{
         return flow {
             emit(UiState.Loading)
-            val databaseSongs = musicDao.getAllSongs()
+            val databaseSongs = musicDao.getAllSongs().first()
             if (databaseSongs.isNotEmpty()){
                 emit(UiState.Success(databaseSongs))
                 return@flow
@@ -41,16 +47,17 @@ class SongRepository @Inject constructor(
             }
             try {
                 val fetchedSongs = fetchAllAudiosFromDevice()
-                    musicDao.deleteSongs()
-                    musicDao.insertAllSongs(fetchedSongs)
-                    emit(UiState.Success(fetchedSongs))
+                musicDao.deleteSongs()
+                musicDao.insertAllSongs(fetchedSongs)
             }catch (e: Exception){
                 emit(UiState.Error(ERROR_MESSAGE))
             }
-        }.flowOn(Dispatchers.IO)
-
+        }.flatMapLatest {
+            musicDao.getAllSongs()
+                .map { UiState.Success(it) }
+                .catch { UiState.Error(ERROR_MESSAGE) }
+        }
     }
-
     fun searchSong(songName : String): Flow<UiState<List<Song>>> {
         return flow {
             emit(UiState.Loading)
@@ -59,48 +66,62 @@ class SongRepository @Inject constructor(
                 emit(UiState.Success(searchedSongs))
                 return@flow
             }
-        }.flowOn(Dispatchers.IO)
+        }
     }
-
     fun getAlbumSongs(albumName : String): Flow<UiState<Album>>{
         return flow{
             emit(UiState.Loading)
-            val album = musicDao.getAlbumByName(albumName)
-            emit(UiState.Success(album))
-        }.flowOn(Dispatchers.IO)
+            try {
+                val album = musicDao.getAlbumByName(albumName)
+                emit(UiState.Success(album))
+            }catch (e:Exception){
+                e.message?.let {
+                    emit(UiState.Error(it))
+                }
+            }
+        }
     }
-
     fun  getArtistSongs(artistName: String): Flow<UiState<Artist>>{
         return flow{
             emit(UiState.Loading)
-            val artist = musicDao.getArtistByName(artistName)
-            emit(UiState.Success(artist))
-        }.flowOn(Dispatchers.IO)
-    }
+            try {
+                val artist = musicDao.getArtistByName(artistName)
+                emit(UiState.Success(artist))
+            }catch (e:Exception){
+                e.message?.let {
+                    UiState.Error(it)
+                }
+            }
 
+        }
+    }
     fun getPlaylistSongs(playListSong : String): Flow<UiState<PlayList>>{
         return flow {
             emit(UiState.Loading)
-            val playList = musicDao.getPlayListByName(playListSong)
-            emit(UiState.Success(playList))
-        }.flowOn(Dispatchers.IO)
+            try {
+                val playList = musicDao.getPlayListByName(playListSong)
+                emit(UiState.Success(playList))
+            }catch (e:Exception){
+                e.message?.let {
+                    UiState.Error(it)
+                }
+            }
+        }
     }
-
     suspend fun checkAndRefresh(): UiState<List<Song>>{
-            if (!isPermissionGranted()){
-                return UiState.Error(PERMISSION_DISALLOWED)
-            }
-            return try{
-                val deviceSongs =  fetchAllAudiosFromDevice()
-                val localSongs = musicDao.getAllSongs()
-                val sortedDeviceSongs = deviceSongs.sortedBy { it.songId }
-                val sortedLocalSongs = localSongs.sortedBy { it.songId }
-                checkIfLocalDataBaseHasTheSameDataAsTheDevice(sortedLocalSongs, sortedDeviceSongs)
-            }catch (e: Exception){
-                 UiState.Error(e.localizedMessage ?: ERROR_MESSAGE)
-            }
+        if (!isPermissionGranted()){
+            return UiState.Error(PERMISSION_DISALLOWED)
+        }
+        return try{
+            val deviceSongs =  fetchAllAudiosFromDevice()
+            val localSongs = musicDao.getAllSongs().first()
+            val sortedDeviceSongs = deviceSongs.sortedBy { it.songId }
+            val sortedLocalSongs = localSongs.sortedBy { it.songId }
+            checkIfLocalDataBaseHasTheSameDataAsTheDevice(sortedLocalSongs, sortedDeviceSongs)
+        }catch (e: Exception){
+            UiState.Error(e.localizedMessage ?: ERROR_MESSAGE)
+        }
     }
-
     private suspend fun checkIfLocalDataBaseHasTheSameDataAsTheDevice(
         localSongs: List<Song>,
         deviceSongs:List<Song>
@@ -113,18 +134,25 @@ class SongRepository @Inject constructor(
             UiState.Success(localSongs)
         }
     }
-
     private suspend fun fetchAllAudiosFromDevice(): List<Song> {
         return withContext(Dispatchers.IO){
             val audioFiles = mutableListOf<Song>()
             val cursor = getCursorFromContentResolverAfterQueryingForTheRequiredAudios()
-            cursor.use {
-                while (it?.moveToNext() == true){
-                    val song = getSongDataFromCursorAndMakeAnInstanceOfSong(it)
-                    checkIfSongPathIsValidateAndAddItToTheListOfSongs(song,audioFiles)
-                }
+            cursor?.let {
+                setCursorResultAfterMovingThroughAllData(it,audioFiles)
             }
             return@withContext audioFiles
+        }
+    }
+    private fun setCursorResultAfterMovingThroughAllData(
+        cursor: Cursor,
+        audioFiles:MutableList<Song>
+    ){
+        cursor.use {
+            while (it.moveToNext()){
+                val song = getSongDataFromCursorAndMakeAnInstanceOfSong(it)
+                checkIfSongPathIsValidateAndAddItToTheListOfSongs(song,audioFiles)
+            }
         }
     }
     private fun getSongDataFromCursorAndMakeAnInstanceOfSong(cursor: Cursor):Song{
@@ -207,11 +235,11 @@ class SongRepository @Inject constructor(
         ) ==PackageManager.PERMISSION_GRANTED
     }
     companion object{
-        const val ERROR_MESSAGE = "Error Fetching Music"
-        const val PERMISSION_DISALLOWED = "Permission is not allowed"
-        const val URI_STRING = "content://media/external/audio/albumart"
-        const val UNFOUNDED_FILE = "File Not Found"
-        const val OPUS = "opus"
-        const val AUD = "AUD"
+        private const val ERROR_MESSAGE = "Error Fetching Music"
+        private const val PERMISSION_DISALLOWED = "Permission is not allowed"
+        private const val URI_STRING = "content://media/external/audio/albumart"
+        private const val UNFOUNDED_FILE = "File Not Found"
+        private const val OPUS = "opus"
+        private const val AUD = "AUD"
     }
 }

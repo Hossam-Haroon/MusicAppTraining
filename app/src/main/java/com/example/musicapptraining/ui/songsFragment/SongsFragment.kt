@@ -6,10 +6,7 @@ import android.os.Build
 import androidx.fragment.app.viewModels
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -18,7 +15,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.musicapptraining.R
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSongsBinding
 import com.example.musicapptraining.ui.BaseFragment
@@ -29,7 +25,9 @@ import com.example.musicapptraining.ui.sortOptionBottomSheet.SortOptionBottomShe
 import com.example.musicapptraining.utilities.OnOptionSelected
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.SortOptions
-import com.example.musicapptraining.utilities.UiState
+import com.example.musicapptraining.utilities.handleUiState
+import com.example.musicapptraining.utilities.sortComparator
+import com.example.musicapptraining.utilities.sortOptionsInBottomSheetBasedOnUserChoice
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.launch
@@ -42,55 +40,75 @@ class SongsFragment :
     BaseFragment<FragmentSongsBinding>(FragmentSongsBinding::inflate),
     OnOptionSelected
 {
-    private lateinit var adapter: SongAdapter
-    private val songsViewModel: SongsViewModel by viewModels()
+    private val songAdapter by lazy { SongAdapter() }
+    private val songsViewModel: SongsViewModel by activityViewModels()
     private val playerViewModel: MusicPlayerViewModel by activityViewModels()
     private var permissionContinuation: Continuation<Boolean>? = null
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         checkRequestPermissionLauncher()
-
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setAdapterForListOfSongs()
-
         viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED){
-                if (requestReadExternalStoragePermission()) {
-                    songsViewModel.fetchAllMusic()
-                    songsViewModel.songListState.collect { uiState ->
-                        handleUiState(uiState)
+            checkIfPermissionGrantedOrNotToFetchAllAudios()
+            setViewModelObservers()
+        }
+        setAdapterClickListeners()
+        setCLickListeners()
+    }
+    private suspend fun checkIfPermissionGrantedOrNotToFetchAllAudios(){
+        if (requestReadExternalStoragePermission()){
+            songsViewModel.fetchAllMusic()
+        }else {
+            Log.i(
+                PERMISSION_TAG,
+                "onViewCreated: not granted permission"
+            )
+        }
+    }
+    private suspend fun setViewModelObservers(){
+        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
+            songsViewModel.songListState.collect { uiState ->
+                handleUiState(
+                    uiState =  uiState,
+                    successState = { songList->
+                        val sortedList = songList.sortedByDescending {
+                            it.songDateAdded
+                        }
+                        songAdapter.asyncListDiffer.submitList(sortedList)
+                        binding.songsCountTv.text = songList.size.toString()
+                        playerViewModel.getEvent(
+                            PlayerEvents.AddPlayList(songList,false)
+                        )
+                    },
+                    errorState = {errorMessage ->
+                        Log.e(
+                            ERROR_WARNING,
+                            "Error fetching songs: $errorMessage"
+                        )
                     }
-                } else {
-                    Log.i(
-                        PERMISSION_TAG,
-                        "onViewCreated: not granted permission"
-                    )
-                }
+                )
             }
         }
-        adapter.apply {
+    }
+    private fun setAdapterClickListeners(){
+        songAdapter.apply {
             setOnItemClickListener{song->
-               playerViewModel.getEvent(
-                   PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
-               )
-                val bottomSheetSong = PlayedSongBottomSheet(song)
-                parentFragmentManager.let {
-                    bottomSheetSong.show(it,bottomSheetSong.tag)
-                }
+                playerViewModel.getEvent(
+                    PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
+                )
+                showPlayedSongBottomSheet(song)
             }
             setOnMoreButtonClickListener { song->
-                val moreButtonBottomSheet = MoreButtonBottomSheet(song)
-                parentFragmentManager.let {
-                    moreButtonBottomSheet.show(it,moreButtonBottomSheet.tag)
-                }
+                showMoreButtonBottomSheet(song)
             }
         }
+    }
+    private fun setCLickListeners(){
         binding.apply{
             playAllTv.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.GoToSpecificItem(0))
@@ -99,36 +117,32 @@ class SongsFragment :
                 playerViewModel.getEvent(PlayerEvents.GoToSpecificItem(0))
             }
             sortOptions.setOnClickListener {
-                val bottomSheet = SortOptionBottomSheet(this@SongsFragment)
-                parentFragmentManager.let{ bottomSheet.show(it,bottomSheet.tag)}
+                showSortOptionBottomSheet(this@SongsFragment)
             }
         }
     }
     override fun onOptionSelected(sortOptions: SortOptions) {
-        when(sortOptions){
-            SortOptions.SONG_NAME -> {
-                sortOptionsInBottomSheetBasedOnUserChoice(SortOptions.SONG_NAME){songList->
-                    songList.sortedByDescending {
-                        it.songName
-                    }
-                }
-            }
-            SortOptions.ARTIST_NAME -> {
-                //SortOptionBottomSheet.sortOption = SortOptions.ARTIST_NAME
-                sortOptionsInBottomSheetBasedOnUserChoice(SortOptions.ARTIST_NAME){songList->
-                    songList.sortedByDescending {
-                        it.songArtist
-                    }
-                }
-            }
-            SortOptions.DATE_ADDED -> {
-                sortOptionsInBottomSheetBasedOnUserChoice(SortOptions.DATE_ADDED){ songList ->
-                    songList.sortedByDescending {
-                        it.songDateAdded
-                    }
-                }
-            }
+        val comparator  = sortComparator[sortOptions] ?: return
+        with(songAdapter.asyncListDiffer){
+            sortOptionsInBottomSheetBasedOnUserChoice(
+                currentList,
+                sortOptions,
+                this,
+                comparator
+            )
         }
+    }
+    private fun showSortOptionBottomSheet(onOptionSelected: OnOptionSelected){
+        val bottomSheet = SortOptionBottomSheet.newInstance(onOptionSelected)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun showPlayedSongBottomSheet(song:Song){
+        val bottomSheet = PlayedSongBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun showMoreButtonBottomSheet(song: Song){
+        val bottomSheet = MoreButtonBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
     }
     private fun checkRequestPermissionLauncher(){
         requestPermissionLauncher = registerForActivityResult(
@@ -140,7 +154,6 @@ class SongsFragment :
                 permissionContinuation?.resume(false)
             }
             permissionContinuation = null
-
         }
     }
     private suspend fun requestReadExternalStoragePermission(): Boolean {
@@ -170,44 +183,11 @@ class SongsFragment :
         } else {
             permissionContinuation = continuation
             requestPermissionLauncher.launch(permission)
-
-        }
-    }
-    private fun sortOptionsInBottomSheetBasedOnUserChoice(
-        sortOptions: SortOptions,
-        enteredSortedList : (List<Song>)-> List<Song>
-    ){
-        val sortedList = enteredSortedList(adapter.asyncListDiffer.currentList)
-        SortOptionBottomSheet.sortOption = sortOptions
-        adapter.asyncListDiffer.submitList(sortedList)
-    }
-    private fun handleUiState(uiState:UiState<List<Song>>){
-        when (uiState) {
-            is UiState.Error -> {
-                Log.e(
-                    ERROR_WARNING,
-                    "Error fetching songs: ${uiState.message}"
-                )
-            }
-
-            UiState.Loading -> {}
-            is UiState.Success -> {
-                val sortedList = uiState.data.sortedByDescending { it.songDateAdded }
-                adapter.asyncListDiffer.submitList(sortedList)
-                binding.songsCountTv.text = uiState.data.size.toString()
-                playerViewModel.getEvent(
-                    PlayerEvents.AddPlayList(
-                        sortedList,
-                        false
-                    )
-                )
-            }
         }
     }
     private fun setAdapterForListOfSongs() {
-        adapter = SongAdapter()
         binding.songsRv.apply {
-            adapter = adapter
+            adapter = this@SongsFragment.songAdapter
             layoutManager = LinearLayoutManager(context)
             setHasFixedSize(true)
         }
@@ -216,7 +196,6 @@ class SongsFragment :
         const val ERROR_WARNING = "Error warning"
         const val PERMISSION_TAG = "permission request"
     }
-
 }
 
 

@@ -36,23 +36,23 @@ class MediaController(
     val viewModelScope: CoroutineScope,
     val sharedPreferences: SharedPreferences,
     val currentMediaPositionInList: MutableStateFlow<Float>
-    ): Player.Listener{
+    ): Player.Listener {
 
-        var duration : Long = 0
-        var songIdToPlayNext : String = ""
-        private lateinit var controller : ListenableFuture<MediaController>
-
-
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            super.onMediaItemTransition(mediaItem, reason)
-            currentMediaPosition.value = 0f
+    var duration: Long = 0
+    var songIdToPlayNext: String = ""
+    private lateinit var controller: ListenableFuture<MediaController>
 
 
-            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && songIdToPlayNext != "") {
-                getTrackIndexById(songIdToPlayNext)
-                songIdToPlayNext = ""
-            }
-                /*if (mediaItem != null) {
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+        super.onMediaItemTransition(mediaItem, reason)
+        currentMediaPosition.value = 0f
+
+
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && songIdToPlayNext != "") {
+            getTrackIndexById(songIdToPlayNext)
+            songIdToPlayNext = ""
+        }
+        /*if (mediaItem != null) {
                     currentSong.value = toMusicItem(mediaItem)
                     saveFloatValue(player.currentMediaItemIndex.toFloat())
                     currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
@@ -73,48 +73,52 @@ class MediaController(
             }*/
 
 
-           // }
-            if (mediaItem != null){
-                currentMediaDurationInMinutes.value = player.duration
-                currentSong.value = toMusicItem(mediaItem)
-                saveFloatValue(player.currentMediaItemIndex.toFloat())
-                currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
+        // }
+        if (mediaItem != null) {
+            currentMediaDurationInMinutes.value = player.duration
+            currentSong.value = toMusicItem(mediaItem)
+            saveFloatValue(player.currentMediaItemIndex.toFloat())
+            currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
+        }
+    }
+
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        super.onIsPlayingChanged(isPlaying)
+        isPausePlayClicked.value = isPlaying
+    }
+
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        super.onPlaybackStateChanged(playbackState)
+
+        when (playbackState) {
+            Player.STATE_ENDED -> {
+                if (player.hasNextMediaItem()) {
+                    nextItem()
+                    saveFloatValue(player.currentMediaItemIndex.toFloat())
+                }
+
+            }
+
+            Player.STATE_IDLE -> {
+                currentMediaDurationInMinutes.value = 0L
+                currentMediaProgressInMinutes.value = 0L
+                isBufferingClicked.value = false
+
+            }
+
+            Player.STATE_BUFFERING -> {
+                isBufferingClicked.value = true
+            }
+
+            Player.STATE_READY -> {
+                isBufferingClicked.value = false
+                //updateMediaInfo()
+
             }
         }
+    }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            super.onIsPlayingChanged(isPlaying)
-            isPausePlayClicked.value = isPlaying
-        }
-
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            super.onPlaybackStateChanged(playbackState)
-
-            when(playbackState){
-                Player.STATE_ENDED ->{
-                    if (player.hasNextMediaItem()) {
-                        nextItem()
-                        saveFloatValue(player.currentMediaItemIndex.toFloat())
-                    }
-
-                }
-                Player.STATE_IDLE -> {
-                    currentMediaDurationInMinutes.value = 0L
-                    currentMediaProgressInMinutes.value = 0L
-                    isBufferingClicked.value = false
-
-                }
-                Player.STATE_BUFFERING->{
-                    isBufferingClicked.value = true
-                }
-                Player.STATE_READY -> {
-                    isBufferingClicked.value = false
-                    //updateMediaInfo()
-
-                }
-            }
-        }
-     fun updateMediaInfo() {
+    fun updateMediaInfo() {
         player.currentMediaItem?.let { mediaItem ->
 
             currentSong.value = toMusicItem(mediaItem)
@@ -122,16 +126,17 @@ class MediaController(
             if (duration == C.TIME_UNSET) duration = 0
             currentMediaDurationInMinutes.value = duration
             currentMediaProgressInMinutes.value = player.currentPosition
-            currentMediaPosition.value = if (duration > 0) player.currentPosition.toFloat() / duration.toFloat() else 0f
+            currentMediaPosition.value =
+                if (duration > 0) player.currentPosition.toFloat() / duration.toFloat() else 0f
             currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
             saveFloatValue(player.currentMediaItemIndex.toFloat())
         }
     }
 
-    fun getTrackIndexById(itemId: String): Int{
-        for (i in 0 until player.mediaItemCount){
+    fun getTrackIndexById(itemId: String): Int {
+        for (i in 0 until player.mediaItemCount) {
             val mediaItem = player.getMediaItemAt(i)
-            if (mediaItem.mediaId.equals(itemId)){
+            if (mediaItem.mediaId.equals(itemId)) {
                 moveToSpecificItem(i)
                 return i
             }
@@ -140,22 +145,22 @@ class MediaController(
         return -1
     }
 
-    fun addPlayList(songs: List<Song>, updateListRequired: Boolean){
-        if (updateListRequired){
-            for (item in songs){
+    fun addPlayList(songs: List<Song>, updateListRequired: Boolean) {
+        if (updateListRequired) {
+            for (item in songs) {
                 val metaData = getMediaMetaDataFromItem(item)
                 val mediaItem = MediaItem.Builder().apply {
                     setUri(item.songPath)
                     setMediaId(item.songId)
                     setMediaMetadata(metaData)
                 }.build()
-               player.addMediaItem(mediaItem)
+                player.addMediaItem(mediaItem)
             }
             player.prepare()
             player.pause()
-        }else{
-            if (player.mediaItemCount <= 0){
-                for (item in songs){
+        } else {
+            if (player.mediaItemCount <= 0) {
+                for (item in songs) {
                     val metaData = getMediaMetaDataFromItem(item)
                     val mediaItem = MediaItem.Builder().apply {
                         setMediaId(item.songId)
@@ -170,91 +175,91 @@ class MediaController(
         }
     }
 
-    fun updatePlayerProgress(playerProgress : Long){
+    fun updatePlayerProgress(playerProgress: Long) {
         currentMediaProgressInMinutes.value = playerProgress
-        val progress = playerProgress.toFloat()/duration.toFloat()
+        val progress = playerProgress.toFloat() / duration.toFloat()
         if (!progress.isNaN()) currentMediaPosition.value = progress
     }
 
-    fun pauseOrPlay(){
-        if (player.isPlaying){
+    fun pauseOrPlay() {
+        if (player.isPlaying) {
             player.pause()
-        }else{
+        } else {
             player.play()
         }
         currentSong.value = toMusicItem(player.currentMediaItem!!)
     }
 
-    fun shuffleClick(){
-        if (isShufflingClicked.value){
+    fun shuffleClick() {
+        if (isShufflingClicked.value) {
             isShufflingClicked.value = false
             player.shuffleModeEnabled = isShufflingClicked.value
-        }else{
+        } else {
             isShufflingClicked.value = true
             player.shuffleModeEnabled = isShufflingClicked.value
         }
 
     }
 
-    fun repeatClick(){
-        if (isRepeatingClicked.value){
+    fun repeatClick() {
+        if (isRepeatingClicked.value) {
             isRepeatingClicked.value = false
             player.repeatMode = Player.REPEAT_MODE_OFF
-        }else{
+        } else {
             isRepeatingClicked.value = true
             player.repeatMode = Player.REPEAT_MODE_ONE
         }
     }
 
 
-
-
-    fun nextItem(){
-        if (player.hasNextMediaItem()){
+    fun nextItem() {
+        if (player.hasNextMediaItem()) {
             player.seekToNextMediaItem()
             currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
         }
     }
 
-    fun previousItem(){
-        if (player.hasPreviousMediaItem()){
+    fun previousItem() {
+        if (player.hasPreviousMediaItem()) {
             player.seekToPreviousMediaItem()
             currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
 
         }
     }
 
-    fun moveToSpecificItem(index:Int){
-        player.seekTo(index,0L)
+    fun moveToSpecificItem(index: Int) {
+        player.seekTo(index, 0L)
         player.play()
         currentSong.value = toMusicItem(player.currentMediaItem!!)
         saveFloatValue(player.currentMediaItemIndex.toFloat())
         currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
     }
 
-    fun moveToSpecificPosition(position:Long){
+    fun moveToSpecificPosition(position: Long) {
         player.seekTo(position)
     }
 
-    fun saveFloatValue(value : Float){
-        val editor= sharedPreferences.edit()
-        editor.putFloat(LAST_PLAYED_VALUE,value)
+    fun saveFloatValue(value: Float) {
+        val editor = sharedPreferences.edit()
+        editor.putFloat(LAST_PLAYED_VALUE, value)
         editor.apply()
     }
 
 
-    fun seekForward(){
+    fun seekForward() {
         player.seekForward()
     }
-    fun seekBackward(){
+
+    fun seekBackward() {
         player.seekBack()
     }
-    fun clearPlayer(){
+
+    fun clearPlayer() {
         player.stop()
         player.clearMediaItems()
     }
 
-    private fun getMediaMetaDataFromItem(song : Song):MediaMetadata{
+    private fun getMediaMetaDataFromItem(song: Song): MediaMetadata {
         val extras = Bundle().apply {
             putString("KEY_SONG_PATH", song.songPath)
         }
@@ -269,16 +274,17 @@ class MediaController(
             .build()
     }
 
-    fun setSongToPlayNext(songId: String){
+    fun setSongToPlayNext(songId: String) {
         songIdToPlayNext = songId
     }
 
-    fun setupMediaNotification(context : Context){
+    fun setupMediaNotification(context: Context) {
         val sessionToken = SessionToken(context, ComponentName(context, MusicService::class.java))
-        controller =MediaController.Builder(context, sessionToken).buildAsync()
-        controller.addListener({
-               val mediaController = controller.get()
-                mediaController.addListener(object: Player.Listener{
+        controller = MediaController.Builder(context, sessionToken).buildAsync()
+        controller.addListener(
+            {
+                val mediaController = controller.get()
+                mediaController.addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         super.onIsPlayingChanged(isPlaying)
 
@@ -288,7 +294,7 @@ class MediaController(
                         if (duration == -9223372036854775807) duration = 0
                         currentMediaDurationInMinutes.value = duration
                         viewModelScope.launch {
-                            while (isPausePlayClicked.value){
+                            while (isPausePlayClicked.value) {
                                 currentSong.value = toMusicItem(player.currentMediaItem!!)
                                 updatePlayerProgress(player.currentPosition)
                                 delay(1000)
@@ -303,11 +309,12 @@ class MediaController(
                         reason: Int
                     ) {
                         super.onPositionDiscontinuity(oldPosition, newPosition, reason)
-                        when(reason){
+                        when (reason) {
                             Player.DISCONTINUITY_REASON_SEEK -> {
                                 updatePlayerProgress(newPosition.contentPositionMs)
                                 player.seekTo(newPosition.contentPositionMs)
                             }
+
                             Player.DISCONTINUITY_REASON_AUTO_TRANSITION -> Unit
                             Player.DISCONTINUITY_REASON_SKIP -> Unit
                             Player.DISCONTINUITY_REASON_REMOVE -> Unit
@@ -318,14 +325,14 @@ class MediaController(
 
                 })
 
-        },
+            },
             MoreExecutors.directExecutor()
 
         )
     }
 
-    private fun toMusicItem(mediaItem: MediaItem): Song{
-        val songPath =mediaItem.mediaMetadata.extras?.getString("KEY_SONG_PATH") ?: ""
+    private fun toMusicItem(mediaItem: MediaItem): Song {
+        val songPath = mediaItem.mediaMetadata.extras?.getString("KEY_SONG_PATH") ?: ""
         return Song(
             mediaItem.mediaId,
             mediaItem.mediaMetadata.displayTitle.toString(),
@@ -336,10 +343,6 @@ class MediaController(
             0,
             mediaItem.mediaMetadata.artworkUri.toString(),
             "mp3"
-            )
+        )
     }
-
-
-
-
-    }
+}

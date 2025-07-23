@@ -11,12 +11,10 @@ import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.AddToPlaylistRvItemBinding
 import com.example.musicapptraining.databinding.SongsRvItemBinding
 
-class AddToPlayListAdapter : RecyclerView.Adapter<AddToPlayListAdapter.AddToPlaylistViewHolder>() {
-        class AddToPlaylistViewHolder(val binding : AddToPlaylistRvItemBinding): ViewHolder(binding.root) {
-
-        }
-
-
+class AddToPlayListAdapter : RecyclerView.Adapter<AddToPlayListAdapter.AddToPlaylistViewHolder>(){
+        class AddToPlaylistViewHolder(
+            val binding : AddToPlaylistRvItemBinding): ViewHolder(binding.root
+            )
         private val diffUtil = object : ItemCallback<PlayList>(){
             override fun areItemsTheSame(oldItem: PlayList, newItem: PlayList): Boolean {
                return oldItem.playlistName == newItem.playlistName
@@ -26,18 +24,18 @@ class AddToPlayListAdapter : RecyclerView.Adapter<AddToPlayListAdapter.AddToPlay
                 return oldItem == newItem
             }
         }
-
         val asyncListDiffer = AsyncListDiffer(this, diffUtil)
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AddToPlaylistViewHolder {
-            val binding = AddToPlaylistRvItemBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AddToPlaylistViewHolder{
+            val binding = AddToPlaylistRvItemBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
             return AddToPlaylistViewHolder(binding)
         }
-
         override fun getItemCount(): Int {
             return asyncListDiffer.currentList.size
         }
-
         override fun onBindViewHolder(holder: AddToPlaylistViewHolder, position: Int) {
             val playList = asyncListDiffer.currentList[position]
 
@@ -49,9 +47,7 @@ class AddToPlayListAdapter : RecyclerView.Adapter<AddToPlayListAdapter.AddToPlay
                 }
             }
         }
-
         var onClickListener : ((PlayList)-> Unit)? = null
-
         fun setOnItemClickListener(listener:(PlayList)-> Unit){
             onClickListener = listener
         }

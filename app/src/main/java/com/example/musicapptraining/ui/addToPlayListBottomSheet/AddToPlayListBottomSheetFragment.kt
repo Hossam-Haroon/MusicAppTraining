@@ -2,79 +2,96 @@ package com.example.musicapptraining.ui.addToPlayListBottomSheet
 
 import androidx.fragment.app.viewModels
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.musicapptraining.R
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentAddToPlayListBottomSheetBinding
-import com.example.musicapptraining.ui.songsFragment.SongAdapter
-import com.example.musicapptraining.utilities.UiState
+import com.example.musicapptraining.ui.BaseBottomSheetDialogFragment
+import com.example.musicapptraining.ui.moreButtonBottomSheet.MoreButtonBottomSheet
+import com.example.musicapptraining.ui.moreButtonBottomSheet.MoreButtonBottomSheet.Companion
+import com.example.musicapptraining.ui.playedSongBottomSheet.PlayedSongBottomSheet
+import com.example.musicapptraining.utilities.getParcelableCompat
+import com.google.android.material.R
+import com.example.musicapptraining.utilities.handleUiState
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class AddToPlayListBottomSheetFragment(private val song : Song) : BottomSheetDialogFragment() {
-
-    private lateinit var binding : FragmentAddToPlayListBottomSheetBinding
-    private val viewModel: AddToPlayListBottomSheetViewModel by viewModels()
-    private lateinit var adapter : AddToPlayListAdapter
-
+class AddToPlayListBottomSheetFragment :
+    BaseBottomSheetDialogFragment<FragmentAddToPlayListBottomSheetBinding>(
+        FragmentAddToPlayListBottomSheetBinding::inflate
+    ) {
+    private val addToPlayListBottomSheetViewModel: AddToPlayListBottomSheetViewModel by viewModels()
+    private lateinit var song: Song
+    private val addToPlayListAdapter by lazy { AddToPlayListAdapter() }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
+        song = arguments?.getParcelableCompat<Song>(ARG_SONG)
+            ?: throw IllegalArgumentException("song required")
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        val behavior = BottomSheetBehavior.from(bottomSheet!!)
-        behavior.state = BottomSheetBehavior.STATE_EXPANDED
-
+        setBottomSheetBehaviourToExpanded()
         setAdapter()
-
+        setViewmodelObservers()
+        setAdapterClickListeners()
+    }
+    private fun setViewmodelObservers(){
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.getPlayLists()
-            viewModel.getPlayLists.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        adapter.asyncListDiffer.submitList(uiState.data)
-                        adapter.asyncListDiffer.currentList.sortedByDescending { it.playlistName }
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                addToPlayListBottomSheetViewModel.getPlayLists.collect{uiState->
+                    with(addToPlayListAdapter.asyncListDiffer){
+                        handleUiState(
+                            uiState,
+                            successState = { playLists ->
+                                val sortedList = playLists.sortedByDescending  { it.playlistName }
+                                submitList(sortedList)
+                            },
+                            errorState = {
+                                Log.d(
+                                    ERROR_FETCHING_PLAYLISTS,
+                                    "Error : Can't fetch playLists")
+                            }
+                        )
                     }
                 }
             }
         }
-        adapter.setOnItemClickListener { playList ->
-            viewModel.addSongToPlayList(song, playList)
+    }
+    private fun setAdapterClickListeners(){
+        addToPlayListAdapter.setOnItemClickListener { playList ->
+            addToPlayListBottomSheetViewModel.addSongToPlayList(song, playList)
             dismiss()
         }
-
-
-
-
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentAddToPlayListBottomSheetBinding.inflate(inflater,container,false)
-        return binding.root
+    private fun setBottomSheetBehaviourToExpanded(){
+        val bottomSheet = dialog?.findViewById<View>(
+            R.id.design_bottom_sheet
+        )
+        val behavior = BottomSheetBehavior.from(bottomSheet!!)
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
-
     private fun setAdapter() {
-        adapter = AddToPlayListAdapter()
-        binding.playlistNamesRv.adapter =adapter
-        binding.playlistNamesRv.layoutManager = LinearLayoutManager(context)
-        binding.playlistNamesRv.setHasFixedSize(true)
+        binding.playlistNamesRv.apply {
+            adapter = this@AddToPlayListBottomSheetFragment.addToPlayListAdapter
+            layoutManager = LinearLayoutManager(context)
+            setHasFixedSize(true)
+        }
+    }
+    companion object{
+        const val ERROR_FETCHING_PLAYLISTS = "error fetching playLists"
+        const val ARG_SONG = "song"
+        fun newInstance(song: Song): AddToPlayListBottomSheetFragment {
+            return AddToPlayListBottomSheetFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable(MoreButtonBottomSheet.ARG_SONG,song)
+                }
+            }
+        }
     }
 }

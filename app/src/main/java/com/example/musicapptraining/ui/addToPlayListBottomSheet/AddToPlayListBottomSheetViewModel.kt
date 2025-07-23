@@ -17,27 +17,20 @@ import javax.inject.Inject
 class AddToPlayListBottomSheetViewModel @Inject constructor(
    private val playListRepository: PlayListRepository
 ) : ViewModel() {
-
-    val _getPlayLists : MutableStateFlow<UiState<List<PlayList>>> = MutableStateFlow(UiState.Loading)
+    private val _getPlayLists : MutableStateFlow<UiState<List<PlayList>>> =
+        MutableStateFlow(UiState.Loading)
     val getPlayLists = _getPlayLists.asStateFlow()
-
-    fun getPlayLists(){
+    init {
+        getPlayLists()
+    }
+    private fun getPlayLists(){
         viewModelScope.launch {
-            _getPlayLists.value = UiState.Loading
             val playLists = playListRepository.getPlayLists()
             playLists.collect{uiState ->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _getPlayLists.value = uiState
-                    }
-                }
+                _getPlayLists.value = uiState
             }
         }
-
     }
-
     fun addSongToPlayList(song:Song, playList: PlayList){
         viewModelScope.launch {
             playListRepository.addSongToPlayList(song,playList)

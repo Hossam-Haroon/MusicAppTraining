@@ -19,69 +19,32 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val songRepository: SongRepository,
-    private val artistsRepository: ArtistRepository,
-    private val albumRepository: AlbumRepository
+    private val artistsRepository: ArtistRepository
 ) : ViewModel() {
-    private var _songListState : MutableStateFlow<UiState<List<Song>>> = MutableStateFlow(UiState.Loading)
+    private var _songListState : MutableStateFlow<UiState<List<Song>>> =
+        MutableStateFlow(UiState.Loading)
     val songListState  = _songListState.asStateFlow()
-    private var _artistListState : MutableStateFlow<UiState<List<Artist>>> = MutableStateFlow(UiState.Loading)
+    private var _artistListState : MutableStateFlow<UiState<List<Artist>>> =
+        MutableStateFlow(UiState.Loading)
     val artistListState = _artistListState.asStateFlow()
-    private var _albumListState : MutableStateFlow<UiState<List<Album>>> = MutableStateFlow(UiState.Loading)
-    val albumListState = _albumListState.asStateFlow()
-
-
     fun getSearchedSongs(text: String){
         viewModelScope.launch {
-            _songListState.value = UiState.Loading
             val songs = songRepository.searchSong(text)
             songs.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _songListState.value = uiState
-                    }
-                }
-
+                _songListState.value = uiState
             }
         }
     }
     fun getSearchedArtists(text: String){
         viewModelScope.launch {
-            _artistListState.value = UiState.Loading
             val artists = artistsRepository.searchArtistByName(text)
             artists.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _artistListState.value = uiState
-                    }
-                }
-
-            }
-        }
-    }
-    fun getSearchedAlbums(text: String){
-        viewModelScope.launch {
-            _albumListState.value = UiState.Loading
-            val albums = albumRepository.searchAlbumByName(text)
-            albums.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _albumListState.value = uiState
-                    }
-                }
-
+                _artistListState.value = uiState
             }
         }
     }
     fun clearData(){
         _songListState.value = UiState.Loading
         _artistListState.value = UiState.Loading
-        _albumListState.value = UiState.Loading
     }
-
 }

@@ -15,27 +15,21 @@ import javax.inject.Inject
 class ArtistViewModel @Inject constructor(
     private val artistsRepository: ArtistRepository
 ) : ViewModel() {
-
-    private var _artistListState : MutableStateFlow<UiState<List<Artist>>> = MutableStateFlow(UiState.Loading)
+    private var _artistListState : MutableStateFlow<UiState<List<Artist>>> =
+        MutableStateFlow(UiState.Loading)
     val artistListState = _artistListState.asStateFlow()
-
-
-    fun getAllArtists(){
+    init {
+        getAllArtists()
+    }
+    private fun getAllArtists(){
         viewModelScope.launch {
-            _artistListState.value = UiState.Loading
             val artists = artistsRepository.getArtists()
             artists.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _artistListState.value = uiState
-                    }
-                }
-
+                _artistListState.value = uiState
             }
         }
     }
-
-
+    fun insertArtist(name:String){
+        artistsRepository.insertArtist(name)
+    }
 }

@@ -6,16 +6,20 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.Adapter
 import com.example.musicapptraining.R
 import com.example.musicapptraining.data.model.Album
 import com.example.musicapptraining.data.model.Artist
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSearchBinding
 import com.example.musicapptraining.databinding.FragmentSearchMoreButtonBinding
+import com.example.musicapptraining.ui.BaseFragment
 import com.example.musicapptraining.ui.albumFragment.AlbumAdapter
 import com.example.musicapptraining.ui.artistFragment.ArtistAdapter
 import com.example.musicapptraining.ui.moreButtonBottomSheet.MoreButtonBottomSheet
@@ -27,124 +31,103 @@ import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class SearchMoreButtonFragment : Fragment() {
-    private lateinit var songAdapter: SongAdapter
-    private lateinit var artistAdapter: ArtistAdapter
-    private lateinit var albumAdapter: AlbumAdapter
-    private lateinit var binding : FragmentSearchMoreButtonBinding
+class SearchMoreButtonFragment :
+    BaseFragment<FragmentSearchMoreButtonBinding>(
+        FragmentSearchMoreButtonBinding::inflate
+    ){
+    private  var songAdapter: SongAdapter? = null
+    private  var artistAdapter: ArtistAdapter? = null
+    private  var albumAdapter: AlbumAdapter? = null
     private val navArgs: SearchMoreButtonFragmentArgs by navArgs()
-
-    private val playerViewModel : MusicPlayerViewModel by viewModels()
-
+    private val playerViewModel : MusicPlayerViewModel by activityViewModels()
     private var songList = emptyArray<Song>()
     private var artistList = emptyArray<Artist>()
     private var albumList = emptyArray<Album>()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         songList = navArgs.songList
         artistList = navArgs.artistList
         albumList = navArgs.albumList
-        setAdapters()
-        try {
-            if (songList.isNotEmpty()){
-                binding.Rv.adapter = songAdapter
-                songAdapter.asyncListDiffer.submitList(songList.toList())
-                songAdapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-
-            }else if(artistList.isNotEmpty()){
-                binding.Rv.adapter = artistAdapter
-                artistAdapter.asyncListDiffer.submitList(artistList.toList())
-                artistAdapter.asyncListDiffer.currentList.sortedByDescending { it.artistName }
-            }else if(albumList.isNotEmpty()){
-                binding.Rv.adapter = albumAdapter
-                albumAdapter.asyncListDiffer.submitList(albumList.toList())
-                albumAdapter.asyncListDiffer.currentList.sortedByDescending { it.albumName }
-            }
-        }catch (e:Exception){
-            Log.d("checkSearchMore","${e.message}")
-        }
-
-
-
-
-        songAdapter.apply {
+        checkValidListAndSetTheSuitableAdapterBasedOnResult()
+        setSongAdapterClickListeners()
+        setArtistAdapterClickListeners()
+    }
+    private fun setSongAdapterClickListeners(){
+        songAdapter?.apply {
             setOnItemClickListener{song->
                 playerViewModel.getEvent(
                     PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
                 )
-                val bottomSheetSong = PlayedSongBottomSheet(song)
-                parentFragmentManager.let { bottomSheetSong.show(it,bottomSheetSong.tag) }
+                showPlayedSongBottomSheet(song)
             }
             setOnMoreButtonClickListener { song->
-                val moreButtonBottomSheet = MoreButtonBottomSheet(song)
-                parentFragmentManager.let { moreButtonBottomSheet.show(it,moreButtonBottomSheet.tag) }
-
+                showMoreButtonBottomSheet(song)
             }
         }
-        artistAdapter.setOnItemClickListener {
-            val bundle = Bundle().apply {
-                putString("artistName",it.artistName)
-                putString("playListName","")
-                putString("albumName","")
-            }
-            findNavController().navigate(
-                R.id.action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
+    }
+    private fun setArtistAdapterClickListeners(){
+        artistAdapter?.setOnItemClickListener {
+            val action = SearchMoreButtonFragmentDirections.
+            actionSearchMoreButtonFragmentToArtistsAndAlbumsAndPlaylistsFragment(
+                it.artistName,
+                EMPTY_STRING,
+                EMPTY_STRING
             )
-
+            findNavController().navigate(action)
         }
-       /* albumAdapter.setOnItemClickListener { album ->
-            val bundle = Bundle().apply {
-                putString("albumName",album.albumName)
+    }
+    private fun showPlayedSongBottomSheet(song: Song){
+        val bottomSheet = PlayedSongBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun showMoreButtonBottomSheet(song: Song){
+        val bottomSheet = MoreButtonBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun checkValidListAndSetTheSuitableAdapterBasedOnResult(){
+        when{
+            songList.isNotEmpty() -> {
+                songAdapter = SongAdapter()
+                setCorrectAdapter(songAdapter!!,
+                    songList.toList(),
+                    sortedBy = {it.songDateAdded}
+                ){sortedList ->
+                    songAdapter?.asyncListDiffer?.submitList(sortedList)
+                }
             }
-            findNavController().navigate(
-                R.id.action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
-            )
-        }*/
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentSearchMoreButtonBinding.inflate(inflater,container,false)
-        return binding.root
-    }
-
-    /*private fun setSongAdapter() {
-        songAdapter = SongAdapter()
-        binding.Rv.adapter = songAdapter
-        binding.Rv.layoutManager = LinearLayoutManager(context)
-    }
-    private fun setArtistsAdapter() {
-        artistAdapter = ArtistAdapter()
-        binding.Rv.adapter = artistAdapter
-        binding.Rv.layoutManager = LinearLayoutManager(context)
-    }
-    private fun setAlbumAdapter() {
-        albumAdapter = AlbumAdapter()
-        binding.Rv.adapter = albumAdapter
-        binding.Rv.layoutManager = LinearLayoutManager(context)
-    }*/
-
-    private fun setAdapters(){
-        songAdapter = SongAdapter()
-        artistAdapter = ArtistAdapter()
-        albumAdapter = AlbumAdapter()
-
-        binding.Rv.layoutManager = LinearLayoutManager(context)
-
-        // Set the adapter based on which list is not empty
-        when {
-            songList.isNotEmpty() -> binding.Rv.adapter = songAdapter
-            artistList.isNotEmpty() -> binding.Rv.adapter = artistAdapter
-            albumList.isNotEmpty() -> binding.Rv.adapter = albumAdapter
+            artistList.isNotEmpty() -> {
+                artistAdapter = ArtistAdapter()
+                setCorrectAdapter(artistAdapter!!,
+                    artistList.toList(),
+                    sortedBy = {it.artistName}
+                ){sortedList ->
+                    artistAdapter?.asyncListDiffer?.submitList(sortedList)
+                }
+            }
+            albumList.isNotEmpty() -> {
+                albumAdapter = AlbumAdapter()
+                setCorrectAdapter(albumAdapter!!,
+                    albumList.toList(),
+                    sortedBy = {it.albumName}
+                ){sortedList ->
+                    albumAdapter?.asyncListDiffer?.submitList(sortedList)
+                }
+            }
         }
+    }
+    private fun <T,R:Comparable<R>, Adapter:RecyclerView.Adapter<*>>setCorrectAdapter(
+        adapter: Adapter,
+        list : List<T>,
+        sortedBy: (T) -> R,
+        setList: (List<T>) -> Unit
+    ){
+        binding.Rv.layoutManager = LinearLayoutManager(context)
+        binding.Rv.adapter = adapter
+        val sortedList = list.sortedByDescending(sortedBy)
+        setList(sortedList)
+    }
+    companion object{
+       private const val EMPTY_STRING = ""
     }
 }
 

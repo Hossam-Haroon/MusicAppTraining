@@ -6,85 +6,78 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicapptraining.R
+import com.example.musicapptraining.data.model.Artist
 import com.example.musicapptraining.databinding.FragmentArtistBinding
+import com.example.musicapptraining.ui.BaseFragment
+import com.example.musicapptraining.ui.homeFragment.HomeFragmentDirections
 import com.example.musicapptraining.ui.songsFragment.SongAdapter
 import com.example.musicapptraining.utilities.UiState
+import com.example.musicapptraining.utilities.handleUiState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class ArtistFragment : Fragment() {
-
-   private lateinit var binding : FragmentArtistBinding
-    private val viewModel: ArtistViewModel by viewModels()
-    private lateinit var adapter : ArtistAdapter
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
+class ArtistFragment : BaseFragment<FragmentArtistBinding>(FragmentArtistBinding::inflate) {
+    private val artistViewModel: ArtistViewModel by activityViewModels()
+    private val artistAdapter by lazy { ArtistAdapter() }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setAdapter()
-        // adapter fun here
-
-
-        viewModel.getAllArtists()
+        setViewModelObservers()
+        setAdapterClickListeners()
+    }
+    private fun setViewModelObservers(){
         viewLifecycleOwner.lifecycleScope.launch {
-
-            viewModel.artistListState.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {
-                        binding.artistsCountTv.text = "Error Loading Artists"
-                    }
-                    UiState.Loading -> {
-                        binding.artistsCountTv.text = "Loading artists..."
-                    }
-                    is UiState.Success -> {
-                        adapter.asyncListDiffer.submitList(uiState.data)
-                        adapter.asyncListDiffer.currentList.sortedByDescending { it.artistName }
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
+                artistViewModel.artistListState.collect{uiState->
+                    with(artistAdapter.asyncListDiffer){
+                        binding.apply {
+                            handleUiState(
+                                uiState = uiState,
+                                successState = {
+                                    val sortedList = currentList.sortedByDescending {it.artistName}
+                                    submitList(sortedList)
+                                    artistsCountTv.text = getString(
+                                        R.string.artist_count,
+                                        currentList.size
+                                    )
+                                },
+                                errorState = {
+                                    artistsCountTv.text = getString(R.string.error_loading_artists)
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
-        binding.artistsCountTv.text = "${adapter.asyncListDiffer.currentList.size} Artists"
-
-        adapter.setOnItemClickListener {
-            val bundle = Bundle().apply {
-                putString("artistName",it.artistName)
-                putString("albumName","")
-                putString("playListName","")
-            }
-            findNavController().navigate(
-                R.id.action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
-            )
-            // navigate to artists and albums sheet
-            // also send the artist name to show his songs
+    }
+    private fun setAdapterClickListeners(){
+        artistAdapter.setOnItemClickListener {artist->
+            navigateToArtistsAndAlbumsAndPlaylistsFragmentWithArtistName(artist)
         }
-
-       /* binding.addPlaylistImage.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_addNewArtist)
-
-        }*/
-
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentArtistBinding.inflate(inflater,container,false)
-        return binding.root
+    private fun navigateToArtistsAndAlbumsAndPlaylistsFragmentWithArtistName(artist:Artist){
+        val action = HomeFragmentDirections
+            .actionHomeFragmentToArtistsAndAlbumsAndPlaylistsFragment(
+                artistName = artist.artistName,
+                albumName = "",
+                playListName = ""
+        )
+        findNavController().navigate(action)
     }
-
     private fun setAdapter() {
-        adapter = ArtistAdapter()
-        binding.artistsRv.adapter = adapter
-        binding.artistsRv.layoutManager = LinearLayoutManager(context)
-        binding.artistsRv.setHasFixedSize(true)
+        binding.artistsRv.apply {
+            adapter = this@ArtistFragment.artistAdapter
+            layoutManager = LinearLayoutManager(context)
+            setHasFixedSize(true)
+        }
     }
 }

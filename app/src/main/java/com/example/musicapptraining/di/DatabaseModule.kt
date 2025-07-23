@@ -27,7 +27,6 @@ object DatabaseModule {
             .fallbackToDestructiveMigration()
             .build()
     }
-
     @Singleton
     @Provides
     fun provideDao(musicDatabase: MusicDatabase): MusicDao{

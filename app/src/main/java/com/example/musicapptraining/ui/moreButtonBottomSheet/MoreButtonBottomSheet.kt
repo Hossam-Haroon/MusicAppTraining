@@ -1,87 +1,75 @@
 package com.example.musicapptraining.ui.moreButtonBottomSheet
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.NavAction
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.example.musicapptraining.R
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentMoreButtonBottomSheetBinding
+import com.example.musicapptraining.ui.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.ui.addToPlayListBottomSheet.AddToPlayListBottomSheetFragment
+import com.example.musicapptraining.ui.homeFragment.HomeFragmentDirections
 import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
+import com.example.musicapptraining.utilities.getParcelableCompat
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
 @AndroidEntryPoint
-class MoreButtonBottomSheet(val song : Song) : BottomSheetDialogFragment() {
-
-    private lateinit var binding : FragmentMoreButtonBottomSheetBinding
+class MoreButtonBottomSheet :
+    BaseBottomSheetDialogFragment<FragmentMoreButtonBottomSheetBinding>(
+        FragmentMoreButtonBottomSheetBinding::inflate
+    ) {
     private val playerViewModel : MusicPlayerViewModel by activityViewModels()
-
-
+    private lateinit var  song: Song
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        song = arguments?.getParcelableCompat<Song>(ARG_SONG)
+            ?: throw IllegalArgumentException("song required")
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         binding.artistSongMoreButton.text = song.songArtist
-        //binding.albumSongMoreButton.text = song.songAlbum
+        setCLickListeners()
+    }
+    private fun setCLickListeners(){
         binding.apply {
             artistSongMoreButton.setOnClickListener {
-                val bundle = Bundle().apply {
-                        putString("artistName", song.songArtist)
-                        putString("albumName", "")
-                        putString("playListName", "")
-                }
-                findNavController().navigateUp()
-                findNavController().navigate(
-                    R.id.action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment,
-                    bundle
+                val action = HomeFragmentDirections.
+                actionHomeFragmentToArtistsAndAlbumsAndPlaylistsFragment(
+                    artistName = song.songArtist,
+                    albumName = EMPTY_STRING,
+                    playListName = EMPTY_STRING
                 )
+                findNavController().navigateUp()
+                findNavController().navigate(action)
                 dismiss()
             }
-            /*albumSongMoreButton.setOnClickListener {
-                val bundle = Bundle().apply {
-                    putString("artistName", song.songAlbum)
-                }
-                findNavController().navigateUp()
-                findNavController().navigate(
-                    R.id.action_homeFragment_to_artistsAndAlbumsAndPlaylistsFragment,
-                    bundle
-                )
-                dismiss()
-            }*/
             playNextSongMoreButton.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.AddSongToPlayNext(song.songId))
-                Toast.makeText(requireContext(),"this song will play next", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),MUSIC_WILL_PLAY_NEXT,Toast.LENGTH_SHORT).show()
                 dismiss()
             }
             songInfoSongMoreButton.setOnClickListener {
-                val bundle = Bundle().apply {
-                    putParcelable("song",song)
-                }
-                findNavController().navigate(
-                    R.id.action_homeFragment_to_songInfoFragment,bundle
-                )
+                val action = HomeFragmentDirections.actionHomeFragmentToSongInfoFragment(song)
+                findNavController().navigate(action)
                 dismiss()
             }
             addToPlaylistSongMoreButton.setOnClickListener {
                 if (isAdded){
-                    val addToPlayListBottomSheet = AddToPlayListBottomSheetFragment(song)
-                    parentFragmentManager.let {
-                        addToPlayListBottomSheet.show(it, addToPlayListBottomSheet.tag)
-                    }
+                    showAddToPlayListBottomSheetFragment(song)
                     dismiss()
                 }
             }
@@ -90,28 +78,36 @@ class MoreButtonBottomSheet(val song : Song) : BottomSheetDialogFragment() {
                 dismiss()
             }
         }
-
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentMoreButtonBottomSheetBinding.inflate(inflater, container, false)
-        return binding.root
+    private fun showAddToPlayListBottomSheetFragment(song: Song){
+        val bottomSheet = AddToPlayListBottomSheetFragment.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
     }
-
     private fun shareAudio(){
         val file = File(song.songPath)
-        val authority ="com.example.musicapptraining"+ ".fileprovider"
+        val authority = APP_ADDRESS + FILE_PROVIDER
         val path = FileProvider.getUriForFile(requireContext(),authority,file)
         val intent = Intent()
         intent.setAction(Intent.ACTION_SEND)
         intent.putExtra(Intent.EXTRA_STREAM,path)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        intent.setType("audio/mp3")
-        startActivity(Intent.createChooser(intent,"share audio"))
-
+        intent.setType(AUDIO_MP3)
+        startActivity(Intent.createChooser(intent,INTENT_TITLE))
     }
-
+    companion object{
+        const val ARG_SONG = "song"
+        const val MUSIC_WILL_PLAY_NEXT = "this song will play next"
+        const val AUDIO_MP3 = "audio/mp3"
+        const val INTENT_TITLE = "share audio"
+        const val FILE_PROVIDER = ".fileprovider"
+        const val APP_ADDRESS = "com.example.musicapptraining"
+        const val EMPTY_STRING = ""
+        fun newInstance(song: Song):MoreButtonBottomSheet{
+            return MoreButtonBottomSheet().apply {
+                arguments = Bundle().apply {
+                    putParcelable(ARG_SONG,song)
+                }
+            }
+        }
+    }
 }

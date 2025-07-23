@@ -10,12 +10,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Adapter
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicapptraining.R
+import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSearchBinding
+import com.example.musicapptraining.ui.BaseFragment
 import com.example.musicapptraining.ui.albumFragment.AlbumAdapter
 import com.example.musicapptraining.ui.artistFragment.ArtistAdapter
 import com.example.musicapptraining.ui.moreButtonBottomSheet.MoreButtonBottomSheet
@@ -24,185 +29,174 @@ import com.example.musicapptraining.ui.playedSongBottomSheet.PlayedSongBottomShe
 import com.example.musicapptraining.ui.songsFragment.SongAdapter
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.UiState
+import com.example.musicapptraining.utilities.handleUiState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class SearchFragment : Fragment() {
-
-    private val viewModel: SearchViewModel by viewModels()
-    private val playerViewModel : MusicPlayerViewModel by viewModels()
-    private lateinit var binding : FragmentSearchBinding
-    private lateinit var songAdapter: SongAdapter
-    private lateinit var artistAdapter: ArtistAdapter
-    //private lateinit var albumAdapter: AlbumAdapter
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
+class SearchFragment : BaseFragment<FragmentSearchBinding>(FragmentSearchBinding::inflate) {
+    private val searchViewModel: SearchViewModel by viewModels()
+    private val playerViewModel : MusicPlayerViewModel by activityViewModels()
+    private val songAdapter by lazy { SongAdapter() }
+    private val artistAdapter by lazy { ArtistAdapter() }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setSongAdapter()
         setArtistsAdapter()
-        //setAlbumAdapter()
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.songListState.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        songAdapter.asyncListDiffer.submitList(uiState.data)
-                        songAdapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-                    }
-                }
-
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.artistListState.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        artistAdapter.asyncListDiffer.submitList(uiState.data)
-                        artistAdapter.asyncListDiffer.currentList.sortedByDescending { it.artistName }
-                    }
-                }
-
-            }
-        }
-        /*viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.albumListState.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> {}
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        albumAdapter.asyncListDiffer.submitList(uiState.data)
-                        albumAdapter.asyncListDiffer.currentList.sortedByDescending { it.albumName }
-                    }
-                }
-
-            }
-        }*/
-
+        setViewmodelObservers()
+        setSongAdapterClickListeners()
+        setArtistAdapterClickListeners()
+        setUiClickListeners()
+    }
+    private fun setSongAdapterClickListeners(){
         songAdapter.apply {
             setOnItemClickListener{song->
                 playerViewModel.getEvent(
                     PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
                 )
-                val bottomSheetSong = PlayedSongBottomSheet(song)
-                parentFragmentManager.let { bottomSheetSong.show(it,bottomSheetSong.tag) }
+                showPlayedSongBottomSheet(song)
             }
             setOnMoreButtonClickListener { song->
-                val moreButtonBottomSheet = MoreButtonBottomSheet(song)
-                parentFragmentManager.let { moreButtonBottomSheet.show(it,moreButtonBottomSheet.tag) }
-
+                showMoreButtonBottomSheet(song)
             }
         }
+    }
+    private fun setArtistAdapterClickListeners(){
         artistAdapter.setOnItemClickListener {
-            val bundle = Bundle().apply {
-                putString("artistName",it.artistName)
-                putString("playListName","")
-                putString("albumName","")
-            }
-            findNavController().navigate(
-                R.id.action_searchFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
+            val action = SearchFragmentDirections
+                .actionSearchFragmentToArtistsAndAlbumsAndPlaylistsFragment(
+                    artistName = it.artistName,
+                    playListName = EMPTY_STRING,
+                    albumName = EMPTY_STRING
             )
-
+            findNavController().navigate(action)
         }
-       /* albumAdapter.setOnItemClickListener { album ->
-            val bundle = Bundle().apply {
-                putString("albumName",album.albumName)
+    }
+    private fun setViewmodelObservers(){
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                launch {
+                    setSongViewmodelObserver()
+                }
+                launch {
+                    setArtistViewmodelObserver()
+                }
             }
-            findNavController().navigate(
-                R.id.action_searchFragment_to_artistsAndAlbumsAndPlaylistsFragment,bundle
-            )
-        }*/
+        }
+    }
+    private suspend fun setSongViewmodelObserver(){
+        searchViewModel.songListState.collect{uiState->
+            with(songAdapter.asyncListDiffer){
+                handleUiState(
+                    uiState = uiState,
+                    successState = {songs->
+                        val sortedList = songs.sortedByDescending { it.songDateAdded }
+                        submitList(sortedList)
+                    },
+                    errorState = {
+                        Log.d(
+                            CHECK_SONGS_SEARCHING,
+                            "Error: can't find the required song")
+                    }
+                )
+            }
+        }
+    }
+    private suspend fun setArtistViewmodelObserver(){
+        searchViewModel.artistListState.collect{uiState->
+            with(artistAdapter.asyncListDiffer){
+                handleUiState(
+                    uiState = uiState,
+                    successState = {artists->
+                        val sortedList = artists.sortedByDescending { it.artistName }
+                        submitList(sortedList)
+                    },
+                    errorState = {
+                        Log.d(
+                            CHECK_ARTIST_SEARCHING,
+                            "Error: can't find the required artist")
+                    }
+                )
+            }
+        }
+    }
+    private fun setUiClickListeners(){
         binding.songMoreTv.setOnClickListener {
             try {
-                val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
-                    viewModel.songListState.value.toData()!!.toTypedArray(),
-                    arrayOf(),
-                    arrayOf()
-                )
+                val action = SearchFragmentDirections
+                    .actionSearchFragmentToSearchMoreButtonFragment(
+                        searchViewModel.songListState.value.toData()!!.toTypedArray(),
+                        arrayOf(),
+                        arrayOf()
+                    )
                 findNavController().navigate(action)
             }catch (e: Exception){
-                Log.e("SearchFragment", "Navigation error: ${e.message}")
+                Log.e(NAVIGATING_TO_SEE_MORE_SONGS, "Navigation error: ${e.message}")
             }
 
         }
         binding.artistMoreTv.setOnClickListener {
-            val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
-                arrayOf(),
-                viewModel.artistListState.value.toData()!!.toTypedArray(),
-                arrayOf()
-            )
-            findNavController().navigate(action)
+            try {
+                val action = SearchFragmentDirections
+                    .actionSearchFragmentToSearchMoreButtonFragment(
+                        arrayOf(),
+                        searchViewModel.artistListState.value.toData()!!.toTypedArray(),
+                        arrayOf()
+                )
+                findNavController().navigate(action)
+            }catch (e: Exception){
+                Log.e(NAVIGATING_TO_SEE_MORE_ARTISTS, "Navigation error: ${e.message}")
+            }
         }
-        /*binding.albumMoreTv.setOnClickListener {
-            val action = SearchFragmentDirections.actionSearchFragmentToSearchMoreButtonFragment(
-                arrayOf(),
-                arrayOf(),
-                viewModel.albumListState.value.toData()!!.toTypedArray()
-
-            )
-            findNavController().navigate(action)
-        }*/
         binding.cancelButton.setOnClickListener {
             findNavController().navigateUp()
         }
-
         binding.searchEt.addTextChangedListener(object:TextWatcher{
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-
             }
-
             override fun onTextChanged(letter: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                if (letter!!.isNotEmpty()){
-                    viewModel.getSearchedSongs(letter.toString())
-                    viewModel.getSearchedArtists(letter.toString())
-                    viewModel.getSearchedAlbums(letter.toString())
-                   // binding.searchItemsGroup.visibility = View.VISIBLE
-                }else{
-                    viewModel.clearData()
-                   // binding.searchItemsGroup.visibility = View.GONE
+                letter?.let {
+                    if (it.isNotEmpty()){
+                        searchViewModel.getSearchedSongs(it.toString())
+                        searchViewModel.getSearchedArtists(it.toString())
+                    }else{
+                        searchViewModel.clearData()
+                    }
                 }
-
             }
-
             override fun afterTextChanged(p0: Editable?) {
-
             }
-
-        })
-
+        }
+        )
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentSearchBinding.inflate(inflater,container,false)
-        return binding.root
+    private fun showPlayedSongBottomSheet(song: Song){
+        val bottomSheet = PlayedSongBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
     }
-
+    private fun showMoreButtonBottomSheet(song: Song){
+        val bottomSheet = MoreButtonBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
     private fun setSongAdapter() {
-        songAdapter = SongAdapter()
-        binding.songsRv.adapter = songAdapter
-        binding.songsRv.layoutManager = LinearLayoutManager(context)
-        binding.songsRv.setHasFixedSize(true)
+        binding.songsRv.apply {
+            adapter = this@SearchFragment.songAdapter
+            layoutManager = LinearLayoutManager(context)
+            setHasFixedSize(true)
+        }
     }
     private fun setArtistsAdapter() {
-        artistAdapter = ArtistAdapter()
-        binding.artistsRv.adapter = artistAdapter
-        binding.artistsRv.layoutManager = LinearLayoutManager(context)
+        binding.artistsRv.apply {
+            adapter = this@SearchFragment.artistAdapter
+            layoutManager = LinearLayoutManager(context)
+            setHasFixedSize(true)
+        }
     }
-   /* private fun setAlbumAdapter() {
-        albumAdapter = AlbumAdapter()
-        binding.albumsRv.adapter = albumAdapter
-        binding.albumsRv.layoutManager = LinearLayoutManager(context)
-    }*/
+    companion object{
+        private const val CHECK_SONGS_SEARCHING = "check songs searching"
+        private const val CHECK_ARTIST_SEARCHING = "check artist searching"
+        private const val EMPTY_STRING = ""
+        private const val NAVIGATING_TO_SEE_MORE_SONGS = "navigating to see more songs"
+        private const val NAVIGATING_TO_SEE_MORE_ARTISTS = "navigating to see more artists"
+    }
 }

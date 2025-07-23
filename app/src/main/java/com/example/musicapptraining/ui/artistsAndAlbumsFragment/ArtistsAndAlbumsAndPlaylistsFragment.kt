@@ -2,18 +2,18 @@ package com.example.musicapptraining.ui.artistsAndAlbumsFragment
 
 import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.example.musicapptraining.R
+import com.example.musicapptraining.data.model.Album
+import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentArtistsAndAlbumsAndPlaylistsBinding
+import com.example.musicapptraining.ui.BaseFragment
 import com.example.musicapptraining.ui.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.playedSongBottomSheet.PlayedSongBottomSheet
@@ -22,94 +22,40 @@ import com.example.musicapptraining.ui.sortOptionBottomSheet.SortOptionBottomShe
 import com.example.musicapptraining.utilities.OnOptionSelected
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.SortOptions
-import com.example.musicapptraining.utilities.UiState
+import com.example.musicapptraining.utilities.handleUiState
+import com.example.musicapptraining.utilities.sortComparator
+import com.example.musicapptraining.utilities.sortOptionsInBottomSheetBasedOnUserChoice
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class ArtistsAndAlbumsAndPlaylistsFragment : Fragment(),OnOptionSelected {
-
-    private lateinit var binding: FragmentArtistsAndAlbumsAndPlaylistsBinding
-    private val playerViewModel : MusicPlayerViewModel by activityViewModels()
-    private val artistAndAlbumViewModel : ArtistAndAlbumViewModel by viewModels()
-    val args : ArtistsAndAlbumsAndPlaylistsFragmentArgs by navArgs()
-    private lateinit var adapter : SongAdapter
-
+class ArtistsAndAlbumsAndPlaylistsFragment :
+    BaseFragment<FragmentArtistsAndAlbumsAndPlaylistsBinding>(
+    FragmentArtistsAndAlbumsAndPlaylistsBinding::inflate
+    ),
+    OnOptionSelected {
+    private val playerViewModel: MusicPlayerViewModel by activityViewModels()
+    private val artistAndAlbumViewModel: ArtistAndAlbumViewModel by viewModels()
+    private val args: ArtistsAndAlbumsAndPlaylistsFragmentArgs by navArgs()
+    val adapter by lazy { SongAdapter() }
     var artistName = ""
     var albumName = ""
     var playListName = ""
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
-
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setAdapter()
-
+        setArgsResultForArtistOrAlbumOrPlaylist()
+        getAudioListBasedOnArtistOrPlayListOrAlbum()
+        setClickListeners()
+        setAdapterCLickListeners()
+    }
+    private fun setArgsResultForArtistOrAlbumOrPlaylist(){
         artistName = args.artistName
         albumName = args.albumName
         playListName = args.playListName
-
-        if (!albumName.equals("")){
-            artistAndAlbumViewModel.getAlbumAudioList(albumName)
-            viewLifecycleOwner.lifecycleScope.launch{
-                artistAndAlbumViewModel.albumAudioList.collect{uiState->
-                    when(uiState){
-                        is UiState.Error -> {}
-                        UiState.Loading -> {}
-                        is UiState.Success ->{
-                            binding.songsCountTv.text = uiState.data.albumSongs.size.toString()
-                            adapter.asyncListDiffer.submitList(uiState.data.albumSongs)
-                            adapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-                            Glide.with(this@ArtistsAndAlbumsAndPlaylistsFragment)
-                                .load(Uri.parse(uiState.data.albumArt))
-                                .into(binding.image)
-                            binding.name.text = uiState.data.albumName
-                        }
-                    }
-
-                }
-            }
-
-        }else if(!artistName.equals("")){
-            artistAndAlbumViewModel.getArtistAudioList(artistName)
-            viewLifecycleOwner.lifecycleScope.launch {
-                artistAndAlbumViewModel.artistAudioList.collect{uiState->
-                    when(uiState){
-                        is UiState.Error -> {}
-                        UiState.Loading -> {}
-                        is UiState.Success ->{
-                            binding.songsCountTv.text = uiState.data.artistSongs.size.toString()
-                            adapter.asyncListDiffer.submitList(uiState.data.artistSongs)
-                            adapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-                            binding.name.text = uiState.data.artistName
-                        }
-                    }
-                }
-            }
-
-        }else{
-            artistAndAlbumViewModel.getPlaylistAudioList(playListName)
-            viewLifecycleOwner.lifecycleScope.launch {
-                artistAndAlbumViewModel.playListAudioList.collect{uiState->
-                    when(uiState){
-                        is UiState.Error -> {}
-                        UiState.Loading -> {}
-                        is UiState.Success ->{
-                            binding.songsCountTv.text = uiState.data.playlistSongs.size.toString()
-                            adapter.asyncListDiffer.submitList(uiState.data.playlistSongs)
-                            adapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-                            binding.name.text = uiState.data.playlistName
-                        }
-                    }
-                }
-            }
-        }
-
+    }
+    private fun setClickListeners(){
         binding.apply {
             playAllTv.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.GoToSpecificItem(0))
@@ -117,61 +63,147 @@ class ArtistsAndAlbumsAndPlaylistsFragment : Fragment(),OnOptionSelected {
             playAllImg.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.GoToSpecificItem(0))
             }
-            sort.setOnClickListener {
-                val sortOptionBottomSheet = SortOptionBottomSheet(
-                    this@ArtistsAndAlbumsAndPlaylistsFragment
-                )
-                parentFragmentManager.let { sortOptionBottomSheet.show(it,sortOptionBottomSheet.tag) }
+            sortOptions.setOnClickListener {
+                showSortOptionBottomSheet()
             }
         }
+    }
+    private fun setAdapterCLickListeners(){
         adapter.apply {
-            setOnItemClickListener{song->
+            setOnItemClickListener { song ->
                 playerViewModel.getEvent(
                     PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
                 )
-                val bottomSheetSong = PlayedSongBottomSheet(song)
-                parentFragmentManager.let { bottomSheetSong.show(it,bottomSheetSong.tag) }
+                showPlayedSongBottomSheet(song)
             }
-            setOnMoreButtonClickListener { song->
-                val moreButtonBottomSheet = MoreButtonBottomSheet(song)
-                parentFragmentManager.let { moreButtonBottomSheet.show(it,moreButtonBottomSheet.tag) }
-
+            setOnMoreButtonClickListener { song ->
+                showMoreButtonBottomSheet(song)
             }
         }
-
-
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentArtistsAndAlbumsAndPlaylistsBinding.inflate(inflater,container,false)
-        return binding.root
+    private fun getAudioListBasedOnArtistOrPlayListOrAlbum(){
+        when {
+            albumName.isNotEmpty() -> {
+                artistAndAlbumViewModel.getAlbumAudioList(albumName)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    setAlbumAudioListObserver()
+                }
+            }
+            artistName.isNotEmpty() -> {
+                artistAndAlbumViewModel.getArtistAudioList(artistName)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    setArtistAudioListObserver()
+                }
+            }
+            else -> {
+                artistAndAlbumViewModel.getPlaylistAudioList(playListName)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    setPlaylistAudioListObserver()
+                }
+            }
+        }
     }
-
+    private suspend fun setAlbumAudioListObserver(){
+        artistAndAlbumViewModel.albumAudioList.collect { uiState ->
+            handleUiState(
+                uiState = uiState,
+                successState = {album ->
+                    updateAdapterWithAudioList(
+                        songsCount = album.albumSongs.size.toString(),
+                        songList = album.albumSongs,
+                        listName = album.albumName
+                    )
+                    setGlideForAlbumImage(album)
+                },
+                errorState = {message ->
+                    Log.d(ALBUM_ERROR_TAG,"ERROR is : $message")
+                }
+            )
+        }
+    }
+    private suspend fun setArtistAudioListObserver(){
+        artistAndAlbumViewModel.artistAudioList.collect { uiState ->
+            handleUiState(
+                uiState = uiState,
+                successState = {artist ->
+                    updateAdapterWithAudioList(
+                        songsCount = artist.artistSongs.size.toString(),
+                        songList = artist.artistSongs,
+                        listName = artist.artistName
+                    )
+                },
+                errorState = {message ->
+                    Log.d(ARTIST_ERROR_TAG,"ERROR is : $message")
+                }
+            )
+        }
+    }
+    private suspend fun setPlaylistAudioListObserver(){
+        artistAndAlbumViewModel.playListAudioList.collect { uiState ->
+            handleUiState(
+                uiState = uiState,
+                successState = {playListResult ->
+                    updateAdapterWithAudioList(
+                        songsCount = playListResult.playlistSongs.size.toString(),
+                        songList = playListResult.playlistSongs,
+                        listName = playListResult.playlistName
+                    )
+                },
+                errorState = {message ->
+                    Log.d(PLAYLIST_ERROR_TAG,"ERROR is : $message")
+                }
+            )
+        }
+    }
+    private fun showPlayedSongBottomSheet(song:Song){
+        val bottomSheet = PlayedSongBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun showMoreButtonBottomSheet(song: Song){
+        val bottomSheet = MoreButtonBottomSheet.newInstance(song)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun showSortOptionBottomSheet(){
+        val bottomSheet = SortOptionBottomSheet.newInstance(this)
+        bottomSheet.show(parentFragmentManager,tag)
+    }
+    private fun updateAdapterWithAudioList(
+        songsCount: String,
+        songList: List<Song>,
+        listName: String
+    ){
+        binding.songsCountTv.text = songsCount
+        val sortedList = songList.sortedByDescending { it.songDateAdded }
+        adapter.asyncListDiffer.submitList(sortedList)
+        binding.name.text = listName
+    }
+    private fun setGlideForAlbumImage(album: Album) {
+        Glide.with(this@ArtistsAndAlbumsAndPlaylistsFragment)
+            .load(Uri.parse(album.albumArt))
+            .into(binding.image)
+        binding.name.text = album.albumName
+    }
     private fun setAdapter() {
-        adapter = SongAdapter()
-        binding.songsRv.adapter = adapter
-        binding.songsRv.layoutManager = LinearLayoutManager(context)
-        binding.songsRv.setHasFixedSize(true)
-    }
-
-    override fun onOptionSelected(sortOptions: SortOptions) {
-        when(sortOptions){
-            SortOptions.SONG_NAME -> {
-                adapter.asyncListDiffer.currentList.sortedByDescending { it.songName }
-                SortOptionBottomSheet.sortOption = SortOptions.SONG_NAME
-            }
-            SortOptions.ARTIST_NAME -> {
-                adapter.asyncListDiffer.currentList.sortedByDescending { it.songArtist }
-                SortOptionBottomSheet.sortOption = SortOptions.ARTIST_NAME
-            }
-            SortOptions.DATE_ADDED -> {
-                adapter.asyncListDiffer.currentList.sortedByDescending { it.songDateAdded }
-                SortOptionBottomSheet.sortOption = SortOptions.DATE_ADDED
-            }
+        binding.songsRv.apply {
+            adapter = this@ArtistsAndAlbumsAndPlaylistsFragment.adapter
+            layoutManager = LinearLayoutManager(context)
+            setHasFixedSize(true)
         }
     }
-
+    override fun onOptionSelected(sortOptions: SortOptions) {
+        val comparator = sortComparator[sortOptions] ?: return
+        with(adapter.asyncListDiffer){
+            sortOptionsInBottomSheetBasedOnUserChoice(
+                currentList,
+                sortOptions,
+                this,
+                comparator
+            )
+        }
+    }
+    companion object{
+        private const val PLAYLIST_ERROR_TAG = "playList Error detected"
+        private const val ARTIST_ERROR_TAG = "artist Error detected"
+        private const val ALBUM_ERROR_TAG = "artist Error detected"
+    }
 }

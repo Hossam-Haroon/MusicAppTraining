@@ -19,5 +19,4 @@ data class Song(
     val songDateAdded : Long,
     val songArt : String?,
     val songMimeType : String
-
 ):Parcelable

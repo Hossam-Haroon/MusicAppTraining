@@ -101,7 +101,7 @@
 
 
     <ImageView
-        android:id="@+id/sort"
+        android:id="@+id/sortOptions"
         android:layout_width="@dimen/_24sdp"
         android:layout_height="@dimen/_24sdp"
         android:layout_marginHorizontal="16dp"

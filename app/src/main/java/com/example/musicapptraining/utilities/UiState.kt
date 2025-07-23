@@ -1,11 +1,9 @@
 package com.example.musicapptraining.utilities
 
 sealed class UiState<out T>{
-
     object Loading:UiState<Nothing>()
     data class Success<T>(val data : T): UiState<T>()
     data class Error(val message: String): UiState<Nothing>()
-
     fun toData(): T?{
         return if (this is Success){
             data
@@ -13,5 +11,11 @@ sealed class UiState<out T>{
             null
         }
     }
-
+    fun getMessage(): String{
+        return if(this is Error){
+            message
+        }else{
+            ""
+        }
+    }
 }

@@ -13,9 +13,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MusicDao {
-
     @Query("SELECT * FROM Song")
-    suspend fun getAllSongs() : List<Song>
+    fun getAllSongs() : Flow<List<Song>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllSongs(songs: List<Song>)
@@ -27,7 +26,7 @@ interface MusicDao {
     suspend fun getSongById(songId : String): Song
 //--------------------------------------------------
     @Query("SELECT * FROM Artist")
-    suspend fun getAllArtists(): List<Artist>
+    fun getAllArtists(): Flow<List<Artist>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllArtists(artists: List<Artist>)
@@ -39,7 +38,7 @@ interface MusicDao {
     suspend fun getArtistByName(name : String): Artist
 //-------------------------------------------------------
     @Query("SELECT * FROM Album")
-    suspend fun getAllAlbums(): List<Album>
+    fun getAllAlbums(): Flow<List<Album>>
 
     @Query("SELECT * FROM Album WHERE albumName= :name")
     suspend fun getAlbumByName(name: String):Album
@@ -51,7 +50,7 @@ interface MusicDao {
     suspend fun insertAllAlbums(albums : List<Album>)
 //---------------------------------------------------------
     @Query("SELECT * FROM PlayList")
-     fun getAllPlaylists(): Flow<List<PlayList>>
+    fun getAllPlaylists(): Flow<List<PlayList>>
 
     @Query("SELECT * FROM PlayList WHERE playlistName = :name")
     suspend fun getPlayListByName(name: String): PlayList
@@ -59,8 +58,6 @@ interface MusicDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayList(playList: PlayList)
 //------------------------------------------------------------
-
-    // search methods
     @Query("SELECT * FROM Song WHERE songName LIKE '%' || :text || '%'")
     suspend fun searchSongsName(text : String): List<Song>
 

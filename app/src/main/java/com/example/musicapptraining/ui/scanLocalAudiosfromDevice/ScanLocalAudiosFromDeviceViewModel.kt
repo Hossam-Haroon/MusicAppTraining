@@ -17,18 +17,17 @@ import javax.inject.Inject
 class ScanLocalAudiosFromDeviceViewModel @Inject constructor(
     private val musicRepository: SongRepository
 ): ViewModel() {
-
-    private var _audioListState: MutableStateFlow<UiState<List<Song>>> = MutableStateFlow(UiState.Loading)
+    private var _audioListState: MutableStateFlow<UiState<List<Song>>> =
+        MutableStateFlow(UiState.Loading)
      val audioListState = _audioListState.asStateFlow()
-
-
+    init {
+        checkAndRefresh()
+    }
     fun checkAndRefresh(){
         viewModelScope.launch {
             _audioListState.value = UiState.Loading
             val checkedAudios = musicRepository.checkAndRefresh()
             _audioListState.value = checkedAudios
         }
-
     }
-
 }

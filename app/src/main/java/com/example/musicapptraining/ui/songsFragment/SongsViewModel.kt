@@ -15,19 +15,33 @@ import javax.inject.Inject
 class SongsViewModel @Inject constructor(
     private val songRepository: SongRepository
 ) : ViewModel() {
-
     private var _songListState : MutableStateFlow<UiState<List<Song>>>
     = MutableStateFlow(UiState.Loading)
-
     var songListState = _songListState.asStateFlow()
-
+    private var hasLoadedData = false
     fun fetchAllMusic(){
-        viewModelScope.launch {
-            _songListState.value = UiState.Loading
-            val cachedAudio = songRepository.getAllSongs()
-            cachedAudio.collect{ resource->
-                _songListState.value = resource
+        when{
+            dataIsLoadedAndSongListStateIsSuccess() -> {
+                return
+            }
+            songListStateIsLoading() -> {
+                return
+            }
+            else -> {
+                hasLoadedData = true
+                viewModelScope.launch {
+                    val cachedAudio = songRepository.getAllSongs()
+                    cachedAudio.collect{ resource->
+                        _songListState.value = resource
+                    }
+                }
+            }
         }
-        }
+    }
+    private fun dataIsLoadedAndSongListStateIsSuccess():Boolean{
+        return hasLoadedData && _songListState.value is UiState.Success
+    }
+    private fun songListStateIsLoading():Boolean{
+        return _songListState.value is UiState.Loading
     }
 }

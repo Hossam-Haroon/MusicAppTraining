@@ -7,47 +7,39 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.musicapptraining.databinding.FragmentAddNewArtistBinding
+import com.example.musicapptraining.ui.BaseFragment
+import com.example.musicapptraining.ui.artistFragment.ArtistViewModel
 
-class AddNewArtistFragment : Fragment() {
-
-
-    private lateinit var binding : FragmentAddNewArtistBinding
-    private val viewModel: AddNewArtistViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-
-    }
-
+class AddNewArtistFragment : BaseFragment<FragmentAddNewArtistBinding>(
+    FragmentAddNewArtistBinding::inflate
+) {
+    private val artistViewModel: ArtistViewModel by activityViewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         binding.btnConfirm.setOnClickListener {
-            if (binding.editText.text.isNotEmpty()){
-                val artistName = binding.editText.text.toString()
-                viewModel.insertArtist(artistName)
-                Toast.makeText(
-                    requireContext(),
-                    "your artist has been created",
-                    Toast.LENGTH_LONG).show()
-                findNavController().navigateUp()
-            }else{
-                Toast.makeText(
-                    requireContext(),
-                    "Please enter a name for your artist",
-                    Toast.LENGTH_LONG).show()
-            }
+            checkEditTextIsEmptyOrNotAndSetResult()
         }
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentAddNewArtistBinding.inflate(inflater,container,false)
-        return binding.root
+    private fun addNewArtistToTheList(){
+        val artistName = binding.editText.text.toString()
+        artistViewModel.insertArtist(artistName)
+        Toast.makeText(
+            requireContext(),
+            "your artist has been created",
+            Toast.LENGTH_LONG).show()
+    }
+    private fun checkEditTextIsEmptyOrNotAndSetResult(){
+        if (binding.editText.text.isNotEmpty()){
+            addNewArtistToTheList()
+            findNavController().navigateUp()
+        }else{
+            Toast.makeText(
+                requireContext(),
+                "Please enter a name for your artist",
+                Toast.LENGTH_LONG).show()
+        }
     }
 }

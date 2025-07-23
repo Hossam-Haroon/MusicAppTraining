@@ -2,4 +2,6 @@
     <string name="app_name">MusicAppTraining</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="error_loading_artists">Error Loading Artists</string>
+    <string name="artist_count">%1$d Artists</string>
 </resources>

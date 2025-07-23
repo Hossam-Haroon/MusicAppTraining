@@ -11,5 +11,4 @@ data class Artist(
     @PrimaryKey
     val artistName: String,
     val artistSongs : MutableList<Song>
-
 ): Parcelable
