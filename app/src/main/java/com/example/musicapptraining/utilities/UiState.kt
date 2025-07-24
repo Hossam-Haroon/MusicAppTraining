@@ -11,7 +11,7 @@ sealed class UiState<out T>{
             null
         }
     }
-    fun getMessage(): String{
+    fun getErrorMessage(): String{
         return if(this is Error){
             message
         }else{

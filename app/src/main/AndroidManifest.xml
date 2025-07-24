@@ -22,7 +22,7 @@
         android:theme="@style/Theme.CustomSplashScreen.starting"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.CustomSplashScreen.starting">
             <intent-filter>

@@ -1,7 +1,9 @@
 package com.example.musicapptraining.utilities
 import androidx.recyclerview.widget.AsyncListDiffer
+import androidx.recyclerview.widget.DiffUtil.ItemCallback
+import androidx.recyclerview.widget.ListAdapter
 import com.example.musicapptraining.data.model.Song
-import com.example.musicapptraining.ui.sortOptionBottomSheet.SortOptionBottomSheet
+import com.example.musicapptraining.ui.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
 
 val sortComparator : Map<SortOptions , Comparator<Song>> = mapOf(
     SortOptions.SONG_NAME to compareByDescending{ it.songName },
@@ -11,7 +13,7 @@ val sortComparator : Map<SortOptions , Comparator<Song>> = mapOf(
 fun <T>sortOptionsInBottomSheetBasedOnUserChoice(
      currentList : List<T>,
      sortOptions: SortOptions,
-     adapter : AsyncListDiffer<T>,
+     adapter : ListAdapter<T,*>,
      comparator: Comparator<T>
 ){
     val sortedList = currentList.sortedWith(comparator)
@@ -31,5 +33,16 @@ fun <T>handleUiState(
         is UiState.Success -> {
             successState(uiState.data)
         }
+    }
+}
+class BaseDiffCallback<T>(
+    private val itemsTheSame : (oldItem:T,newItem:T) -> Boolean,
+    private val contentsTheSame: (oldItem:T,newItem:T) -> Boolean
+): ItemCallback<T>(){
+    override fun areItemsTheSame(oldItem: T & Any, newItem: T & Any): Boolean {
+        return itemsTheSame(oldItem, newItem)
+    }
+    override fun areContentsTheSame(oldItem: T & Any, newItem: T & Any): Boolean {
+        return contentsTheSame(oldItem, newItem)
     }
 }

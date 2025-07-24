@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:background="#3F3F3F"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ui.moreButtonBottomSheet.MoreButtonBottomSheet">
+    tools:context=".ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet">
 
     <TextView
         android:id="@+id/artist_song_more_button"

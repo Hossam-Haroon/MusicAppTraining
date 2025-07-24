@@ -1,0 +1,47 @@
+package com.example.musicapptraining.ui.fragments.songsFragment
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.musicapptraining.data.model.Song
+import com.example.musicapptraining.data.repositories.SongRepository
+import com.example.musicapptraining.utilities.UiState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class SongsViewModel @Inject constructor(
+    private val songRepository: SongRepository
+) : ViewModel() {
+    private var _songListState : MutableStateFlow<UiState<List<Song>>>
+    = MutableStateFlow(UiState.Loading)
+    var songListState = _songListState.asStateFlow()
+    private var hasLoadedData = false
+    fun fetchAllMusic(){
+        when{
+            dataIsLoadedAndSongListStateIsSuccess() -> {
+                return
+            }
+            songListStateIsLoading() -> {
+                return
+            }
+            else -> {
+                hasLoadedData = true
+                viewModelScope.launch {
+                    val cachedAudio = songRepository.getAllSongs()
+                    cachedAudio.collect{ resource->
+                        _songListState.value = resource
+                    }
+                }
+            }
+        }
+    }
+    private fun dataIsLoadedAndSongListStateIsSuccess():Boolean{
+        return hasLoadedData && _songListState.value is UiState.Success
+    }
+    private fun songListStateIsLoading():Boolean{
+        return _songListState.value is UiState.Loading
+    }
+}
