@@ -3,8 +3,10 @@ package com.example.musicapptraining.player
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.media3.common.C.TIME_UNSET
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,6 +61,11 @@ class PlaybackViewModel @Inject constructor(
         "",0,"",0,null,""))
     val currentSong = _currentSong.asStateFlow()
     init {
+        initializeService()
+    }
+    private fun initializeService() {
+        val intent = Intent(applicationContext, MusicServiceTest::class.java)
+        applicationContext.startService(intent)
         setMediaControllerToConnectToMediaSessionService()
     }
     private fun setMediaControllerToConnectToMediaSessionService(){
@@ -66,6 +73,7 @@ class PlaybackViewModel @Inject constructor(
             applicationContext,
             ComponentName(applicationContext,MusicServiceTest::class.java)
         )
+        Log.e("checkMediaController", "loading mediaController")
         mediaControllerFuture = MediaController
             .Builder(applicationContext,sessionToken)
             .buildAsync()
@@ -79,10 +87,14 @@ class PlaybackViewModel @Inject constructor(
             try {
                 mediaController = mediaControllerFuture?.get()
                 mediaController?.let {
-                     it.addListener(PlayerListener(it))
+                    it.addListener(PlayerListener(it))
+                    Log.e("checkMediaController", "mediaController connection successful")
+                    if (it.playbackState == Player.STATE_IDLE) {
+                        it.prepare()
+                    }
                 }
             }catch(e:Exception){
-
+                Log.e("PlaybackViewModel", "MediaController connection failed", e)
             }
         }
     }
@@ -283,7 +295,6 @@ class PlaybackViewModel @Inject constructor(
             _currentMediaPosition.value = 0f
             _currentMediaProgressInMs.value = 0L
             setSongToPlayNextHandle(reason)
-
             _currentMediaPositionInList.value = mediaController.currentMediaItemIndex
             mediaItem?.let { mediaItemValue->
                 _currentSong.value = mediaItemValue.toSong()
@@ -297,6 +308,11 @@ class PlaybackViewModel @Inject constructor(
         }
     }
     private fun addPlaylistOfAudiosToPlayer(audios:List<Song>){
+        viewModelScope.launch {
+            while(mediaController == null){
+                delay(100)
+            }
+        }
         val mediaItems = audios.map { item->
             val metadata = item.toMediaMetaItem()
             MediaItem.Builder().apply {
@@ -310,22 +326,37 @@ class PlaybackViewModel @Inject constructor(
         mediaController?.pause()
     }
     fun getEvent(event:PlayerEvents){
-        when(event){
-            is PlayerEvents.AddPlayList -> addPlaylistOfAudiosToPlayer(event.songs)
-            is PlayerEvents.AddSongToPlayNext -> setSongToPlayNext(event.songId)
-            PlayerEvents.ClearMediaItems -> clearPlayer()
-            is PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList ->
-                getTrackIndexById(event.id)
-            is PlayerEvents.GoToSpecificItem -> moveToSpecificItem(event.index)
-            is PlayerEvents.GoToSpecificPosition -> moveToSpecificPosition(event.position)
-            PlayerEvents.Next -> seekToNextItem()
-            PlayerEvents.PausePlay -> togglePlayback()
-            PlayerEvents.Previous -> seekToPreviousItem()
-            PlayerEvents.Repeat -> repeatButtonClicked()
-            PlayerEvents.SeekBackward -> seekBackward()
-            PlayerEvents.SeekForward -> seekForward()
-            PlayerEvents.Shuffle -> shuffleButtonClicked()
+        try {
+            when(event){
+                is PlayerEvents.AddPlayList -> {
+                    if (mediaController == null){
+                        setMediaControllerToConnectToMediaSessionService()
+                        viewModelScope.launch {
+                            delay(500)
+                            addPlaylistOfAudiosToPlayer(event.songs)
+                        }
+                    }else{
+                        addPlaylistOfAudiosToPlayer(event.songs)
+                    }
+                }
+                is PlayerEvents.AddSongToPlayNext -> setSongToPlayNext(event.songId)
+                PlayerEvents.ClearMediaItems -> clearPlayer()
+                is PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList ->
+                    getTrackIndexById(event.id)
+                is PlayerEvents.GoToSpecificItem -> moveToSpecificItem(event.index)
+                is PlayerEvents.GoToSpecificPosition -> moveToSpecificPosition(event.position)
+                PlayerEvents.Next -> seekToNextItem()
+                PlayerEvents.PausePlay -> togglePlayback()
+                PlayerEvents.Previous -> seekToPreviousItem()
+                PlayerEvents.Repeat -> repeatButtonClicked()
+                PlayerEvents.SeekBackward -> seekBackward()
+                PlayerEvents.SeekForward -> seekForward()
+                PlayerEvents.Shuffle -> shuffleButtonClicked()
+            }
+        }catch (e:Exception){
+            Log.e("PlaybackViewModel", "Error handling player event", e)
         }
+
     }
     companion object{
         private const val KEY_SONG_PATH = "KEY_SONG_PATH"

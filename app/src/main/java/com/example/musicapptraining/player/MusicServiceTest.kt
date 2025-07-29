@@ -28,10 +28,6 @@ class MusicServiceTest : MediaSessionService() {
     @Inject
     lateinit var mediaSession: MediaSession
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
-    override fun onCreate() {
-        super.onCreate()
-        mediaSession.setPlayer(player)
-    }
     override fun onTaskRemoved(rootIntent: Intent?) {
         player.release()
         stopSelf()
