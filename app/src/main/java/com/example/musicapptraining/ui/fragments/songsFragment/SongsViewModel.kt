@@ -1,5 +1,6 @@
 package com.example.musicapptraining.ui.fragments.songsFragment
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicapptraining.data.model.Song
@@ -20,6 +21,15 @@ class SongsViewModel @Inject constructor(
     var songListState = _songListState.asStateFlow()
     private var hasLoadedData = false
     fun fetchAllMusic(){
+        viewModelScope.launch {
+            val cachedAudio = songRepository.getAllSongs()
+            Log.d("check music fetching","no fetching")
+            cachedAudio.collect{ resource->
+                _songListState.value = resource
+            }
+        }
+    }
+   /* fun fetchAllMusic(){
         when{
             dataIsLoadedAndSongListStateIsSuccess() -> {
                 return
@@ -37,7 +47,7 @@ class SongsViewModel @Inject constructor(
                 }
             }
         }
-    }
+    }*/
     private fun dataIsLoadedAndSongListStateIsSuccess():Boolean{
         return hasLoadedData && _songListState.value is UiState.Success
     }

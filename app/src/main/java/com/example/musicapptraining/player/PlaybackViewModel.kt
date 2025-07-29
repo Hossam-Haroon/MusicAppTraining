@@ -281,16 +281,18 @@ class PlaybackViewModel @Inject constructor(
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             _currentMediaPosition.value = 0f
+            _currentMediaProgressInMs.value = 0L
             setSongToPlayNextHandle(reason)
-            if (
-                mediaController.duration > 0
-                && mediaController.duration != TIME_UNSET
-                ){
-                _currentMediaDurationInMs.value = mediaController.duration
-            }
+
             _currentMediaPositionInList.value = mediaController.currentMediaItemIndex
             mediaItem?.let { mediaItemValue->
                 _currentSong.value = mediaItemValue.toSong()
+                if (
+                    mediaController.duration > 0
+                    && mediaController.duration != TIME_UNSET
+                ){
+                    _currentMediaDurationInMs.value = mediaController.duration
+                }
             }
         }
     }

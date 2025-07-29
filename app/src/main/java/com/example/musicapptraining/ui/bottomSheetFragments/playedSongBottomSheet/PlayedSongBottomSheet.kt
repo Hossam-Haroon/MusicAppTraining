@@ -43,7 +43,6 @@ class PlayedSongBottomSheet:
     private var isSongLiked : Boolean = false
     private lateinit var song: Song
     private var likedPlayedList : PlayList? = null
-    private val currentSong = playerViewModel.currentSong.value
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         song = arguments?.getParcelableCompat<Song>(ARG_SONG)
@@ -299,7 +298,7 @@ class PlayedSongBottomSheet:
     }
     private fun showMoreButtonBottomSheet(){
         val moreButtonBottomSheet = MoreButtonBottomSheet.newInstance(
-            currentSong
+            song
         )
         moreButtonBottomSheet.show(parentFragmentManager,tag)
     }
