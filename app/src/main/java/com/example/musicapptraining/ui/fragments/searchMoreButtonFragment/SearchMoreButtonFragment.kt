@@ -11,12 +11,12 @@ import com.example.musicapptraining.data.model.Album
 import com.example.musicapptraining.data.model.Artist
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSearchMoreButtonBinding
+import com.example.musicapptraining.player.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.albumFragment.AlbumAdapter
 import com.example.musicapptraining.ui.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
-import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.utilities.PlayerEvents
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,7 +29,7 @@ class SearchMoreButtonFragment : BaseFragment<FragmentSearchMoreButtonBinding>(
     private var artistAdapter: ArtistAdapter? = null
     private var albumAdapter: AlbumAdapter? = null
     private val navArgs: SearchMoreButtonFragmentArgs by navArgs()
-    private val playerViewModel : MusicPlayerViewModel by activityViewModels()
+    private val playerViewModel : PlaybackViewModel by activityViewModels()
     private var songList = emptyArray<Song>()
     private var artistList = emptyArray<Artist>()
     private var albumList = emptyArray<Album>()

@@ -13,10 +13,10 @@ import com.bumptech.glide.Glide
 import com.example.musicapptraining.data.model.Album
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentArtistsAndAlbumsAndPlaylistsBinding
+import com.example.musicapptraining.player.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
-import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.ui.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
 import com.example.musicapptraining.utilities.OnOptionSelected
@@ -35,7 +35,7 @@ class ArtistsAndAlbumsAndPlaylistsFragment :
     FragmentArtistsAndAlbumsAndPlaylistsBinding::inflate
     ),
     OnOptionSelected {
-    private val playerViewModel: MusicPlayerViewModel by activityViewModels()
+    private val playerViewModel: PlaybackViewModel by activityViewModels()
     private val artistAndAlbumViewModel: ArtistAndAlbumViewModel by viewModels()
     private val args: ArtistsAndAlbumsAndPlaylistsFragmentArgs by navArgs()
     private val songAdapter by lazy { SongAdapter() }

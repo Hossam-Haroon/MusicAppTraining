@@ -13,9 +13,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicapptraining.data.model.Song
 import com.google.android.material.R
 import com.example.musicapptraining.databinding.FragmentAllSongsBottomSheetBinding
+import com.example.musicapptraining.player.PlaybackViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
-import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.ui.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.ui.fragments.songsFragment.SongsViewModel
@@ -31,7 +31,7 @@ class AllSongsBottomSheet :
     BaseBottomSheetDialogFragment<FragmentAllSongsBottomSheetBinding>(
         FragmentAllSongsBottomSheetBinding::inflate
     ) {
-    private val playerViewModel : MusicPlayerViewModel by activityViewModels()
+    private val playerViewModel : PlaybackViewModel by activityViewModels()
     private val songViewModel : SongsViewModel by activityViewModels()
     private val songAdapter by lazy { SongAdapter() }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

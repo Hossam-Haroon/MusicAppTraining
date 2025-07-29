@@ -14,11 +14,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSearchBinding
+import com.example.musicapptraining.player.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
-import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.handleUiState
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class SearchFragment : BaseFragment<FragmentSearchBinding>(FragmentSearchBinding::inflate) {
     private val searchViewModel: SearchViewModel by viewModels()
-    private val playerViewModel : MusicPlayerViewModel by activityViewModels()
+    private val playerViewModel : PlaybackViewModel by activityViewModels()
     private val songAdapter by lazy { SongAdapter() }
     private val artistAdapter by lazy { ArtistAdapter() }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

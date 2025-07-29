@@ -4,6 +4,7 @@ import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.ListAdapter
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.ui.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
+import java.util.Locale
 
 val sortComparator : Map<SortOptions , Comparator<Song>> = mapOf(
     SortOptions.SONG_NAME to compareByDescending{ it.songName },
@@ -33,6 +34,16 @@ fun <T>handleUiState(
         is UiState.Success -> {
             successState(uiState.data)
         }
+    }
+}
+fun formatDuration(durationMs: Long): String {
+    val seconds = (durationMs / 1000) % 60
+    val minutes = (durationMs / (1000 * 60)) % 60
+    val hours = durationMs / (1000 * 60 * 60)
+    return if (hours > 0) {
+        String.format(Locale.US,"%02d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.US,"%02d:%02d", minutes, seconds)
     }
 }
 class BaseDiffCallback<T>(

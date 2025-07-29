@@ -52,28 +52,7 @@ class MediaController(
             getTrackIndexById(songIdToPlayNext)
             songIdToPlayNext = ""
         }
-        /*if (mediaItem != null) {
-                    currentSong.value = toMusicItem(mediaItem)
-                    saveFloatValue(player.currentMediaItemIndex.toFloat())
-                    currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
 
-                    // Update duration for the new media item
-                    duration = player.duration
-                    if (duration == C.TIME_UNSET) duration = 0
-                    currentMediaDurationInMinutes.value = duration
-
-                    // Reset progress
-                    currentMediaProgressInMinutes.value = 0L
-                    updatePlayerProgress(0L)
-                }
-
-                getTrackIndexById(songIdToPlayNext)
-                songIdToPlayNext = ""
-
-            }*/
-
-
-        // }
         if (mediaItem != null) {
             currentMediaDurationInMinutes.value = player.duration
             currentSong.value = toMusicItem(mediaItem)
@@ -346,3 +325,26 @@ class MediaController(
         )
     }
 }
+
+/*if (mediaItem != null) {
+                    currentSong.value = toMusicItem(mediaItem)
+                    saveFloatValue(player.currentMediaItemIndex.toFloat())
+                    currentMediaPositionInList.value = player.currentMediaItemIndex.toFloat()
+
+                    // Update duration for the new media item
+                    duration = player.duration
+                    if (duration == C.TIME_UNSET) duration = 0
+                    currentMediaDurationInMinutes.value = duration
+
+                    // Reset progress
+                    currentMediaProgressInMinutes.value = 0L
+                    updatePlayerProgress(0L)
+                }
+
+                getTrackIndexById(songIdToPlayNext)
+                songIdToPlayNext = ""
+
+            }*/
+
+
+// }

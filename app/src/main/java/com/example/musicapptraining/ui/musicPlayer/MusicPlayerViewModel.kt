@@ -68,7 +68,6 @@ class MusicPlayerViewModel
         val seconds = (durationMs / 1000) % 60
         val minutes = (durationMs / (1000 * 60)) % 60
         val hours = durationMs / (1000 * 60 * 60)
-
         return if (hours > 0) {
             String.format("%02d:%02d:%02d", hours, minutes, seconds)
         } else {

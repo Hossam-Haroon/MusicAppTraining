@@ -14,11 +14,11 @@ import com.example.musicapptraining.R
 import com.example.musicapptraining.ui.ViewPagerAdapter
 import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentHomeBinding
+import com.example.musicapptraining.player.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.artistFragment.ArtistFragment
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.playlistFragment.PlaylistFragment
 import com.example.musicapptraining.ui.fragments.songsFragment.SongsFragment
-import com.example.musicapptraining.ui.musicPlayer.MusicPlayerViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.google.android.material.tabs.TabLayoutMediator
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
     private lateinit var viewPagerAdapter: ViewPagerAdapter
-    val playerViewModel : MusicPlayerViewModel by activityViewModels()
+    val playerViewModel : PlaybackViewModel by activityViewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setViewPagerAdapterForFragments()
@@ -75,7 +75,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
         }
     }
     private suspend fun setIsPausePlayClickedObserver(){
-        playerViewModel.isPausePlayClicked.collect{state->
+        playerViewModel.isPlaying.collect{state->
             setCorrectImageBasedOnIsPausePlayClickedValue(state)
         }
     }
