@@ -21,20 +21,11 @@ class AlbumFragment : Fragment() {
 
    private lateinit var binding: FragmentAlbumBinding
    private lateinit var adapter: AlbumAdapter
-
-    private val viewModel: AlbumViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
-
+   private val viewModel: AlbumViewModel by viewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setAdapter()
-
         viewModel.getAllAlbums()
-
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.albumsListState.collect{uiState->
                 when(uiState){
@@ -45,7 +36,6 @@ class AlbumFragment : Fragment() {
                         adapter.asyncListDiffer.currentList.sortedByDescending { it.albumName }
                     }
                 }
-
             }
         }
 

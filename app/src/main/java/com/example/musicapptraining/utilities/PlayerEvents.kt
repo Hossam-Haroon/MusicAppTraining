@@ -1,6 +1,7 @@
 package com.example.musicapptraining.utilities
 
-import com.example.musicapptraining.data.model.Song
+import com.example.musicapptraining.domain.model.Song
+
 
 sealed class PlayerEvents {
     data class AddPlayList(

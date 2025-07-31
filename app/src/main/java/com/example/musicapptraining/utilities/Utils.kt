@@ -1,8 +1,7 @@
 package com.example.musicapptraining.utilities
-import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.ListAdapter
-import com.example.musicapptraining.data.model.Song
+import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.ui.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
 import java.util.Locale
 

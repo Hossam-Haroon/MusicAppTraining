@@ -2,13 +2,15 @@ package com.example.musicapptraining.ui.fragments.playlistFragment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.musicapptraining.data.model.PlayList
-import com.example.musicapptraining.data.model.Song
-import com.example.musicapptraining.data.repositories.PlayListRepository
+import com.example.musicapptraining.domain.model.Playlist
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.domain.usecases.playlistUseCases.AddNewPlaylistUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.AddSongToPlaylistUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.DeleteSongFromPlaylistUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.GetAllPlaylistsUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.GetLikedPlaylistUseCase
 import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -16,12 +18,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
-    private val playListRepository: PlayListRepository
+    private val getAllPlaylistsUseCase: GetAllPlaylistsUseCase,
+    private val addNewPlaylistUseCase: AddNewPlaylistUseCase,
+    private val getLikedPlaylistUseCase: GetLikedPlaylistUseCase,
+    private val addSongToPlaylistUseCase: AddSongToPlaylistUseCase,
+    private val deleteSongFromPlaylistUseCase: DeleteSongFromPlaylistUseCase
 ) : ViewModel() {
-    private var _playListsState : MutableStateFlow<UiState<List<PlayList>>> =
+    private var _playListsState : MutableStateFlow<UiState<List<Playlist>>> =
         MutableStateFlow(UiState.Loading)
     val playListsState = _playListsState.asStateFlow()
-    private var _likedPlaylistState : MutableStateFlow<UiState<PlayList>> =
+    private var _likedPlaylistState : MutableStateFlow<UiState<Playlist>> =
         MutableStateFlow(UiState.Loading)
     val likedPlaylistState = _likedPlaylistState.asStateFlow()
     private var _deleteSongFromPlaylistUiState : MutableStateFlow<UiState<Unit>> =
@@ -36,7 +42,7 @@ class PlaylistViewModel @Inject constructor(
     }
     private fun getAllPlayLists(){
         viewModelScope.launch {
-            val playLists = playListRepository.getPlayLists()
+            val playLists = getAllPlaylistsUseCase()
             playLists.collect{uiState->
                 _playListsState.value = uiState
             }
@@ -44,22 +50,22 @@ class PlaylistViewModel @Inject constructor(
     }
     fun addNewPlayList(name : String){
         viewModelScope.launch {
-            playListRepository.addNewPlayList(name)
+            addNewPlaylistUseCase(name)
         }
     }
     private fun getLikedPlaylist(){
         viewModelScope.launch {
-           val likedPlaylist = playListRepository.getLikedPlaylist()
+           val likedPlaylist = getLikedPlaylistUseCase()
             likedPlaylist.collect{uiState->
                 _likedPlaylistState.value = uiState
             }
         }
     }
-    fun addSongToPlaylist(song: Song,playList: PlayList){
+    fun addSongToPlaylist(song: Song, playList: Playlist){
         viewModelScope.launch {
             _addSongToPlaylistUiState.value = UiState.Loading
             try {
-                playListRepository.addSongToPlayList(song, playList)
+                addSongToPlaylistUseCase(song,playList)
                 _addSongToPlaylistUiState.value = UiState.Success(Unit)
             }catch (e:Exception){
                 _addSongToPlaylistUiState.value =
@@ -68,11 +74,11 @@ class PlaylistViewModel @Inject constructor(
 
         }
     }
-    fun deleteSongFromPlaylist(song: Song,playList: PlayList){
+    fun deleteSongFromPlaylist(song: Song,playList: Playlist){
         viewModelScope.launch {
             _deleteSongFromPlaylistUiState.value = UiState.Loading
             try {
-                playListRepository.deleteSongFromPlayList(song, playList)
+                deleteSongFromPlaylistUseCase(song,playList)
                 _deleteSongFromPlaylistUiState.value = UiState.Success(Unit)
             }catch (e:Exception){
                 _deleteSongFromPlaylistUiState.value =

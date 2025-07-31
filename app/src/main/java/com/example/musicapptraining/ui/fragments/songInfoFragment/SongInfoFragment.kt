@@ -3,8 +3,8 @@ package com.example.musicapptraining.ui.fragments.songInfoFragment
 import android.os.Bundle
 import android.view.View
 import androidx.navigation.fragment.navArgs
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSongInfoBinding
+import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 

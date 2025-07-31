@@ -2,8 +2,8 @@ package com.example.musicapptraining.ui.fragments.artistFragment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.musicapptraining.data.model.Artist
-import com.example.musicapptraining.data.repositories.ArtistRepository
+import com.example.musicapptraining.domain.model.Artist
+import com.example.musicapptraining.domain.usecases.artistUseCases.GetAllArtistsUseCase
 import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ArtistViewModel @Inject constructor(
-    private val artistsRepository: ArtistRepository
+    private val getAllArtistsUseCase: GetAllArtistsUseCase
 ) : ViewModel() {
     private var _artistListState : MutableStateFlow<UiState<List<Artist>>> =
         MutableStateFlow(UiState.Loading)
@@ -23,13 +23,10 @@ class ArtistViewModel @Inject constructor(
     }
     private fun getAllArtists(){
         viewModelScope.launch {
-            val artists = artistsRepository.getArtists()
+            val artists = getAllArtistsUseCase()
             artists.collect{uiState->
                 _artistListState.value = uiState
             }
         }
-    }
-    fun insertArtist(name:String){
-        artistsRepository.insertArtist(name)
     }
 }

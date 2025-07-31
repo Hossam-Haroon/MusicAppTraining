@@ -2,8 +2,8 @@ package com.example.musicapptraining.ui.fragments.artistFragment
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import com.example.musicapptraining.data.model.Artist
 import com.example.musicapptraining.databinding.ArtistsRvItemBinding
+import com.example.musicapptraining.domain.model.Artist
 import com.example.musicapptraining.ui.baseAdapter.BaseAdapter
 import com.example.musicapptraining.ui.baseAdapter.BaseViewHolder
 import com.example.musicapptraining.utilities.BaseDiffCallback

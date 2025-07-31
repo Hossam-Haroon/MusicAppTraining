@@ -12,9 +12,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.musicapptraining.R
 import com.example.musicapptraining.ui.ViewPagerAdapter
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentHomeBinding
-import com.example.musicapptraining.player.PlaybackViewModel
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.ui.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.artistFragment.ArtistFragment
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.playlistFragment.PlaylistFragment

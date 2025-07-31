@@ -2,9 +2,10 @@ package com.example.musicapptraining.ui.bottomSheetFragments.addToPlayListBottom
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.musicapptraining.data.model.PlayList
-import com.example.musicapptraining.data.model.Song
-import com.example.musicapptraining.data.repositories.PlayListRepository
+import com.example.musicapptraining.domain.model.Playlist
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.domain.usecases.playlistUseCases.AddSongToPlaylistUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.GetAllPlaylistsUseCase
 import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,9 +16,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddToPlayListBottomSheetViewModel @Inject constructor(
-   private val playListRepository: PlayListRepository
+    private val getAllPlaylistsUseCase: GetAllPlaylistsUseCase,
+    private val addSongToPlaylistUseCase: AddSongToPlaylistUseCase
 ) : ViewModel() {
-    private val _getPlayLists : MutableStateFlow<UiState<List<PlayList>>> =
+    private val _getPlayLists : MutableStateFlow<UiState<List<Playlist>>> =
         MutableStateFlow(UiState.Loading)
     val getPlayLists = _getPlayLists.asStateFlow()
     init {
@@ -25,15 +27,15 @@ class AddToPlayListBottomSheetViewModel @Inject constructor(
     }
     private fun getPlayLists(){
         viewModelScope.launch {
-            val playLists = playListRepository.getPlayLists()
+            val playLists = getAllPlaylistsUseCase()
             playLists.collect{uiState ->
                 _getPlayLists.value = uiState
             }
         }
     }
-    fun addSongToPlayList(song:Song, playList: PlayList){
+    fun addSongToPlayList(song:Song, playList: Playlist){
         viewModelScope.launch {
-            playListRepository.addSongToPlayList(song,playList)
+            addSongToPlaylistUseCase(song,playList)
         }
     }
 

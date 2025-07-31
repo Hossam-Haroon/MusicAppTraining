@@ -2,21 +2,15 @@ package com.example.musicapptraining.ui.bottomSheetFragments.addToPlayListBottom
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.AsyncListDiffer
-import androidx.recyclerview.widget.DiffUtil.ItemCallback
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.musicapptraining.data.model.PlayList
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.AddToPlaylistRvItemBinding
-import com.example.musicapptraining.databinding.SongsRvItemBinding
+import com.example.musicapptraining.domain.model.Playlist
 import com.example.musicapptraining.ui.baseAdapter.BaseAdapter
 import com.example.musicapptraining.ui.baseAdapter.BaseViewHolder
 import com.example.musicapptraining.utilities.BaseDiffCallback
 
 class AddToPlayListAdapter :
     BaseAdapter<
-            PlayList,
+            Playlist,
             AddToPlayListAdapter.AddToPlaylistViewHolder,
             AddToPlaylistRvItemBinding
             >(
@@ -36,7 +30,7 @@ class AddToPlayListAdapter :
             )
             return AddToPlaylistViewHolder(binding)
         }
-    override fun bind(item: PlayList, position: Int, binding: AddToPlaylistRvItemBinding) {
+    override fun bind(item: Playlist, position: Int, binding: AddToPlaylistRvItemBinding) {
         binding.apply {
             playListNameTv.text = item.playlistName
             root.setOnClickListener {
@@ -46,8 +40,8 @@ class AddToPlayListAdapter :
             }
         }
     }
-    private var onClickListener : ((PlayList)-> Unit)? = null
-    fun setOnItemClickListener(listener:(PlayList)-> Unit){
+    private var onClickListener : ((Playlist)-> Unit)? = null
+    fun setOnItemClickListener(listener:(Playlist)-> Unit){
         onClickListener = listener
     }
 }

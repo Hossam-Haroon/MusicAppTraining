@@ -1,18 +1,14 @@
-package com.example.musicapptraining.data.model
+package com.example.musicapptraining.data.entities
 
-import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.parcelize.Parcelize
 
-
-@Parcelize
 @Entity
-data class Album(
+data class AlbumEntity(
     val albumName : String,
     @PrimaryKey
     val albumID : String,
     val albumArt : String?,
-    val albumSongs : MutableList<Song>,
+    val albumSongs : MutableList<SongEntity>,
     val albumCreator : String
-): Parcelable
+)

@@ -10,10 +10,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.example.musicapptraining.data.model.Album
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentArtistsAndAlbumsAndPlaylistsBinding
-import com.example.musicapptraining.player.PlaybackViewModel
+import com.example.musicapptraining.domain.model.Album
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.ui.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
@@ -155,7 +155,7 @@ class ArtistsAndAlbumsAndPlaylistsFragment :
             )
         }
     }
-    private fun showPlayedSongBottomSheet(song:Song){
+    private fun showPlayedSongBottomSheet(song: Song){
         val bottomSheet = PlayedSongBottomSheet.newInstance(song)
         bottomSheet.show(parentFragmentManager,tag)
     }

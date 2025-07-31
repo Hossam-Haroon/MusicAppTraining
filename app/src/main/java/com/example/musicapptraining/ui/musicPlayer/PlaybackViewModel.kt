@@ -1,4 +1,4 @@
-package com.example.musicapptraining.player
+package com.example.musicapptraining.ui.musicPlayer
 
 
 import android.content.ComponentName
@@ -15,12 +15,12 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
-import androidx.media3.exoplayer.ExoPlayer
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.example.musicapptraining.data.model.Song
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.player.MusicService
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -61,14 +61,16 @@ class PlaybackViewModel @Inject constructor(
     val isShufflingClicked = _isShufflingClicked.asStateFlow()
     private var _currentMediaPosition = MutableStateFlow(0f)
     val currentMediaPosition = _currentMediaPosition.asStateFlow()
-    private var _currentSong = MutableStateFlow(Song("","","",
-        "",0,"",0,null,""))
+    private var _currentSong = MutableStateFlow(
+        Song("","","",
+        "",0,"",0,null,"")
+    )
     val currentSong = _currentSong.asStateFlow()
     init {
         initializeService()
     }
     private fun initializeService() {
-        val intent = Intent(applicationContext, MusicServiceTest::class.java)
+        val intent = Intent(applicationContext, MusicService::class.java)
         applicationContext.startService(intent)
         viewModelScope.launch {
             delay(500)
@@ -85,7 +87,7 @@ class PlaybackViewModel @Inject constructor(
             try {
                 val sessionToken = SessionToken(
                     applicationContext,
-                    ComponentName(applicationContext,MusicServiceTest::class.java)
+                    ComponentName(applicationContext, MusicService::class.java)
                 )
                 Log.e("checkMediaController", "loading mediaController")
                 mediaControllerFuture = MediaController
@@ -310,7 +312,8 @@ class PlaybackViewModel @Inject constructor(
                     _currentMediaDurationInMs.value = mediaController.duration
                     Log.d(
                         "checkDuration",
-                        "duration from currentMediaDurationFlow: ${_currentMediaDurationInMs.value}"
+                        "duration from currentMediaDurationFlow: " +
+                                "${_currentMediaDurationInMs.value}"
                     )
                 }
             }

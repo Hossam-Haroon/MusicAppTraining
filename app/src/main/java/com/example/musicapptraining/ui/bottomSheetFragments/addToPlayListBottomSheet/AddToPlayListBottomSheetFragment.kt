@@ -8,8 +8,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentAddToPlayListBottomSheetBinding
+import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.ui.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.utilities.getParcelableCompat

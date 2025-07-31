@@ -10,11 +10,14 @@ import android.os.Build
 import android.provider.MediaStore.Audio.Media
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.example.musicapptraining.data.model.Album
-import com.example.musicapptraining.data.model.Artist
-import com.example.musicapptraining.data.model.PlayList
-import com.example.musicapptraining.data.model.Song
+import com.example.musicapptraining.data.mappers.toDomain
+import com.example.musicapptraining.data.mappers.toEntity
 import com.example.musicapptraining.data.source.MusicDao
+import com.example.musicapptraining.domain.model.Album
+import com.example.musicapptraining.domain.model.Artist
+import com.example.musicapptraining.domain.model.Playlist
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.domain.repositories.SongRepository
 import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,20 +26,19 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class SongRepository @Inject constructor(
-    val musicDao : MusicDao,
-    val context : Context
-) {
-     @OptIn(ExperimentalCoroutinesApi::class)
-     fun getAllSongs(): Flow<UiState<List<Song>>>{
+class SongRepositoryImpl @Inject constructor(
+    private val musicDao: MusicDao,
+    private val context: Context
+):SongRepository {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getAllSongs(): Flow<UiState<List<Song>>> {
         return flow {
             emit(UiState.Loading)
-            val databaseSongs = musicDao.getAllSongs().first()
+            val databaseSongs = musicDao.getAllSongs().first().toDomain()
             if (databaseSongs.isNotEmpty()){
                 emit(UiState.Success(databaseSongs))
                 return@flow
@@ -46,7 +48,7 @@ class SongRepository @Inject constructor(
                 return@flow
             }
             try {
-                val fetchedSongs = fetchAllAudiosFromDevice()
+                val fetchedSongs = fetchAllAudiosFromDevice().toEntity()
                 musicDao.deleteSongs()
                 musicDao.insertAllSongs(fetchedSongs)
             }catch (e: Exception){
@@ -54,25 +56,26 @@ class SongRepository @Inject constructor(
             }
         }.flatMapLatest {
             musicDao.getAllSongs()
+                .map { it.toDomain() }
                 .map { UiState.Success(it) }
                 .catch { UiState.Error(ERROR_MESSAGE) }
         }
     }
-    fun searchSong(songName : String): Flow<UiState<List<Song>>> {
+    override fun searchSong(songName: String): Flow<UiState<List<Song>>> {
         return flow {
             emit(UiState.Loading)
-            val searchedSongs =  musicDao.searchSongsName(songName)
+            val searchedSongs =  musicDao.searchSongsName(songName).toDomain()
             if (searchedSongs.isNotEmpty()){
                 emit(UiState.Success(searchedSongs))
                 return@flow
             }
         }
     }
-    fun getAlbumSongs(albumName : String): Flow<UiState<Album>>{
+    override fun getAlbumSongs(albumName: String): Flow<UiState<Album>> {
         return flow{
             emit(UiState.Loading)
             try {
-                val album = musicDao.getAlbumByName(albumName)
+                val album = musicDao.getAlbumByName(albumName).toDomain()
                 emit(UiState.Success(album))
             }catch (e:Exception){
                 e.message?.let {
@@ -81,26 +84,27 @@ class SongRepository @Inject constructor(
             }
         }
     }
-    fun  getArtistSongs(artistName: String): Flow<UiState<Artist>>{
+    override fun getArtistSongs(artistName: String): Flow<UiState<Artist>> {
         return flow{
             emit(UiState.Loading)
             try {
-                val artist = musicDao.getArtistByName(artistName)
+                val artist = musicDao.getArtistByName(artistName).toDomain()
                 emit(UiState.Success(artist))
             }catch (e:Exception){
                 e.message?.let {
                     UiState.Error(it)
                 }
             }
-
         }
     }
-    fun getPlaylistSongs(playListSong : String): Flow<UiState<PlayList>>{
+    override fun getPlaylistSongs(playListSong: String): Flow<UiState<Playlist>> {
         return flow {
             emit(UiState.Loading)
             try {
-                val playList = musicDao.getPlayListByName(playListSong)
-                emit(UiState.Success(playList))
+                val playList = musicDao.getPlayListByName(playListSong)?.toDomain()
+                playList?.let {
+                    emit(UiState.Success(playList))
+                } ?: emit(UiState.Error("can't find playlist"))
             }catch (e:Exception){
                 e.message?.let {
                     UiState.Error(it)
@@ -108,13 +112,13 @@ class SongRepository @Inject constructor(
             }
         }
     }
-    suspend fun checkAndRefresh(): UiState<List<Song>>{
+    override suspend fun checkAndRefresh(): UiState<List<Song>> {
         if (!isPermissionGranted()){
             return UiState.Error(PERMISSION_DISALLOWED)
         }
         return try{
-            val deviceSongs =  fetchAllAudiosFromDevice()
-            val localSongs = musicDao.getAllSongs().first()
+            val deviceSongs = fetchAllAudiosFromDevice()
+            val localSongs = musicDao.getAllSongs().first().toDomain()
             val sortedDeviceSongs = deviceSongs.sortedBy { it.songId }
             val sortedLocalSongs = localSongs.sortedBy { it.songId }
             checkIfLocalDataBaseHasTheSameDataAsTheDevice(sortedLocalSongs, sortedDeviceSongs)
@@ -126,23 +130,22 @@ class SongRepository @Inject constructor(
         localSongs: List<Song>,
         deviceSongs:List<Song>
     ): UiState.Success<List<Song>> {
-       return if (localSongs != deviceSongs) {
+        return if (localSongs != deviceSongs) {
             musicDao.deleteSongs()
-            musicDao.insertAllSongs(deviceSongs)
+            musicDao.insertAllSongs(deviceSongs.toEntity())
             UiState.Success(deviceSongs)
         }else{
             UiState.Success(localSongs)
         }
     }
-    private suspend fun fetchAllAudiosFromDevice(): List<Song> {
-        return withContext(Dispatchers.IO){
-            val audioFiles = mutableListOf<Song>()
-            val cursor = getCursorFromContentResolverAfterQueryingForTheRequiredAudios()
-            cursor?.let {
-                setCursorResultAfterMovingThroughAllData(it,audioFiles)
-            }
-            return@withContext audioFiles
+    private fun fetchAllAudiosFromDevice(): List<Song> {
+        val audioFiles = mutableListOf<Song>()
+        val cursor = getCursorFromContentResolverAfterQueryingForTheRequiredAudios()
+        cursor?.let {
+            setCursorResultAfterMovingThroughAllData(it,audioFiles)
         }
+        return audioFiles
+
     }
     private fun setCursorResultAfterMovingThroughAllData(
         cursor: Cursor,
@@ -232,7 +235,7 @@ class SongRepository @Inject constructor(
         }
         return ContextCompat.checkSelfPermission(
             context, permission
-        ) ==PackageManager.PERMISSION_GRANTED
+        ) == PackageManager.PERMISSION_GRANTED
     }
     companion object{
         private const val ERROR_MESSAGE = "Error Fetching Music"

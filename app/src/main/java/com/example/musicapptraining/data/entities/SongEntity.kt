@@ -1,14 +1,10 @@
-package com.example.musicapptraining.data.model
+package com.example.musicapptraining.data.entities
 
-import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.parcelize.Parcelize
 
-
-@Parcelize
 @Entity
-data class Song(
+data class SongEntity(
     @PrimaryKey
     var songId : String,
     val songName : String,
@@ -19,4 +15,4 @@ data class Song(
     val songDateAdded : Long,
     val songArt : String?,
     val songMimeType : String
-):Parcelable
+)

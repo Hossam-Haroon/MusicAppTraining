@@ -7,11 +7,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.musicapptraining.data.model.Album
-import com.example.musicapptraining.data.model.Artist
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentSearchMoreButtonBinding
-import com.example.musicapptraining.player.PlaybackViewModel
+import com.example.musicapptraining.domain.model.Album
+import com.example.musicapptraining.domain.model.Artist
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.ui.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.ui.fragments.albumFragment.AlbumAdapter
 import com.example.musicapptraining.ui.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment

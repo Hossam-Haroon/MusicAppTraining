@@ -25,9 +25,6 @@
         <action
             android:id="@+id/action_homeFragment_to_searchFragment"
             app:destination="@id/searchFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_addNewArtist"
-            app:destination="@id/addNewArtist" />
     </fragment>
     <fragment
         android:id="@+id/artistsAndAlbumsAndPlaylistsFragment"
@@ -51,7 +48,7 @@
         tools:layout="@layout/fragment_song_info" >
         <argument
             android:name="song"
-            app:argType="com.example.musicapptraining.data.model.Song" />
+            app:argType="com.example.musicapptraining.domain.model.Song" />
     </fragment>
     <fragment
         android:id="@+id/addNewPlayListFragment"
@@ -82,19 +79,15 @@
         tools:layout="@layout/fragment_search_more_button" >
         <argument
             android:name="songList"
-            app:argType="com.example.musicapptraining.data.model.Song[]" />
+            app:argType="com.example.musicapptraining.domain.model.Song[]" />
         <argument
             android:name="artistList"
-            app:argType="com.example.musicapptraining.data.model.Artist[]" />
+            app:argType="com.example.musicapptraining.domain.model.Artist[]" />
         <argument
             android:name="albumList"
-            app:argType="com.example.musicapptraining.data.model.Album[]" />
+            app:argType="com.example.musicapptraining.domain.model.Album[]" />
         <action
             android:id="@+id/action_searchMoreButtonFragment_to_artistsAndAlbumsAndPlaylistsFragment"
             app:destination="@id/artistsAndAlbumsAndPlaylistsFragment" />
     </fragment>
-    <fragment
-        android:id="@+id/addNewArtist"
-        android:name="com.example.musicapptraining.ui.fragments.newArtist.AddNewArtistFragment"
-        android:label="AddNewArtist" />
 </navigation>

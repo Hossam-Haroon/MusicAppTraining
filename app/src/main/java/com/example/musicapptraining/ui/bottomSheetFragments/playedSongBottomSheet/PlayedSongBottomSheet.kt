@@ -16,10 +16,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.musicapptraining.R
-import com.example.musicapptraining.data.model.PlayList
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentPlayedSongBottomSheetBinding
-import com.example.musicapptraining.player.PlaybackViewModel
+import com.example.musicapptraining.domain.model.Playlist
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.ui.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.ui.bottomSheetFragments.allSongsBottomSheet.AllSongsBottomSheet
 import com.example.musicapptraining.ui.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
@@ -42,7 +42,7 @@ class PlayedSongBottomSheet:
     private val playlistViewModel : PlaylistViewModel by activityViewModels()
     private var isSongLiked : Boolean = false
     private lateinit var song: Song
-    private var likedPlayedList : PlayList? = null
+    private var likedPlayedList : Playlist? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         song = arguments?.getParcelableCompat<Song>(ARG_SONG)
@@ -311,7 +311,7 @@ class PlayedSongBottomSheet:
             )
         }
     }
-    private fun setIfPlayedAudioLikedOrNot(likedPlayedList:PlayList){
+    private fun setIfPlayedAudioLikedOrNot(likedPlayedList:Playlist){
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED){
                 if (!isSongLiked){

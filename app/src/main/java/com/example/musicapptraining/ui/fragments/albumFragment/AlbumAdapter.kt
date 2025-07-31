@@ -6,8 +6,8 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.musicapptraining.data.model.Album
 import com.example.musicapptraining.databinding.AlbumsRvItemBinding
+import com.example.musicapptraining.domain.model.Album
 
 class AlbumAdapter: RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder>() {
     class AlbumViewHolder(val binding : AlbumsRvItemBinding): ViewHolder(binding.root) {

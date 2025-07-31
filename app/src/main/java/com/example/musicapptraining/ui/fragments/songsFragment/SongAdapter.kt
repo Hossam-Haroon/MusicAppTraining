@@ -3,8 +3,8 @@ package com.example.musicapptraining.ui.fragments.songsFragment
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.example.musicapptraining.ui.baseAdapter.BaseAdapter
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.SongsRvItemBinding
+import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.ui.baseAdapter.BaseViewHolder
 import com.example.musicapptraining.utilities.BaseDiffCallback
 

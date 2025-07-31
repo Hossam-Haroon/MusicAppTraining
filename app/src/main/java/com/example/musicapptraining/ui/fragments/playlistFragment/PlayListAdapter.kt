@@ -4,9 +4,9 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.musicapptraining.data.model.PlayList
 import com.example.musicapptraining.databinding.AddPlaylistRvItemBinding
 import com.example.musicapptraining.databinding.PlaylistsRvItemBinding
+import com.example.musicapptraining.domain.model.Playlist
 import com.example.musicapptraining.utilities.BaseDiffCallback
 import com.example.musicapptraining.utilities.PlaylistItem
 
@@ -81,8 +81,8 @@ class PlayListAdapter:
             }
         }
     }
-    private var onClickListener : ((PlayList)-> Unit)? = null
-    fun setOnItemClickListener(listener:(PlayList)-> Unit){
+    private var onClickListener : ((Playlist)-> Unit)? = null
+    fun setOnItemClickListener(listener:(Playlist)-> Unit){
         onClickListener = listener
     }
     private var onNewPlayListClickListener : (()-> Unit)? = null

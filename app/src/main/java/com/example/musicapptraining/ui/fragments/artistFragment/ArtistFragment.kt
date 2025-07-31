@@ -9,8 +9,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicapptraining.R
-import com.example.musicapptraining.data.model.Artist
 import com.example.musicapptraining.databinding.FragmentArtistBinding
+import com.example.musicapptraining.domain.model.Artist
 import com.example.musicapptraining.ui.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.ui.fragments.homeFragment.HomeFragmentDirections
 import com.example.musicapptraining.utilities.handleUiState

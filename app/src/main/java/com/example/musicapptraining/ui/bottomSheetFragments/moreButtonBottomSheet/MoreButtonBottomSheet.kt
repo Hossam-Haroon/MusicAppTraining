@@ -7,9 +7,9 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import com.example.musicapptraining.data.model.Song
 import com.example.musicapptraining.databinding.FragmentMoreButtonBottomSheetBinding
-import com.example.musicapptraining.player.PlaybackViewModel
+import com.example.musicapptraining.domain.model.Song
+import com.example.musicapptraining.ui.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.ui.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.ui.bottomSheetFragments.addToPlayListBottomSheet.AddToPlayListBottomSheetFragment
 import com.example.musicapptraining.ui.fragments.homeFragment.HomeFragmentDirections
