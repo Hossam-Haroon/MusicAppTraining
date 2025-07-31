@@ -29,6 +29,7 @@ import com.example.musicapptraining.utilities.sortComparator
 import com.example.musicapptraining.utilities.sortOptionsInBottomSheetBasedOnUserChoice
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.Continuation
@@ -50,7 +51,9 @@ class SongsFragment :
         checkRequestPermissionLauncher()
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        playerViewModel.reconnectIfNeeded()
         super.onViewCreated(view, savedInstanceState)
+        //playerViewModel.setMediaControllerToConnectToMediaSessionService()
         setAdapterForListOfSongs()
         viewLifecycleOwner.lifecycleScope.launch {
             checkIfPermissionGrantedOrNotToFetchAllAudios()
@@ -78,10 +81,11 @@ class SongsFragment :
                         val sortedList = songList.sortedByDescending {
                             it.songDateAdded
                         }
+                        Log.d("SongsFragment", "Songs loaded: ${songList.size}")
                         songAdapter.submitList(sortedList)
                         binding.songsCountTv.text = songList.size.toString()
                         playerViewModel.getEvent(
-                            PlayerEvents.AddPlayList(songList,false)
+                            PlayerEvents.AddPlayList(songList)
                         )
                     },
                     errorState = {errorMessage ->
@@ -97,10 +101,14 @@ class SongsFragment :
     private fun setAdapterClickListeners(){
         songAdapter.apply {
             setOnItemClickListener{song->
-                playerViewModel.getEvent(
-                    PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
-                )
-                showPlayedSongBottomSheet(song)
+                playerViewModel.reconnectIfNeeded()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    delay(300)
+                    playerViewModel.getEvent(
+                        PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
+                    )
+                    showPlayedSongBottomSheet(song)
+                }
             }
             setOnMoreButtonClickListener { song->
                 showMoreButtonBottomSheet(song)

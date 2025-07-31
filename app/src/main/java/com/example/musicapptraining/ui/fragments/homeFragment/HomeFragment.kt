@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
     private lateinit var viewPagerAdapter: ViewPagerAdapter
-    val playerViewModel : PlaybackViewModel by activityViewModels()
+    private val playerViewModel : PlaybackViewModel by activityViewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setViewPagerAdapterForFragments()

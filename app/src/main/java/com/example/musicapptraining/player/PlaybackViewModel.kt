@@ -15,6 +15,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
+import androidx.media3.exoplayer.ExoPlayer
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.media3.session.MediaController
@@ -35,12 +36,15 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class PlaybackViewModel @Inject constructor(
     @ApplicationContext
-    private val applicationContext: Context
+    private val applicationContext: Context,
 ):ViewModel(){
     private var mediaControllerFuture: ListenableFuture<MediaController>? = null
     private var mediaController: MediaController? = null
     private var songIdToPlayNext = ""
-    private var job : Job? = null
+    private var audioProgressJob : Job? = null
+    private var connectionRetryCount = 0
+    private val maxRetryCount = 3
+    private var connectionJob: Job? = null
     private var _isPlaying = MutableStateFlow(false)
     val isPlaying: MutableStateFlow<Boolean> = _isPlaying
     private var _currentMediaPositionInList = MutableStateFlow(0)
@@ -66,83 +70,69 @@ class PlaybackViewModel @Inject constructor(
     private fun initializeService() {
         val intent = Intent(applicationContext, MusicServiceTest::class.java)
         applicationContext.startService(intent)
-        setMediaControllerToConnectToMediaSessionService()
+        viewModelScope.launch {
+            delay(500)
+            setMediaControllerToConnectToMediaSessionService()
+        }
     }
-    private fun setMediaControllerToConnectToMediaSessionService(){
-        val sessionToken = SessionToken(
-            applicationContext,
-            ComponentName(applicationContext,MusicServiceTest::class.java)
-        )
-        Log.e("checkMediaController", "loading mediaController")
-        mediaControllerFuture = MediaController
-            .Builder(applicationContext,sessionToken)
-            .buildAsync()
-        mediaControllerFuture?.addListener(
-            setListenerForMediaControllerFuture(),
-            MoreExecutors.directExecutor()
-        )
+    fun setMediaControllerToConnectToMediaSessionService(){
+        if (mediaControllerFuture != null && !mediaControllerFuture!!.isDone) {
+            Log.d("PlaybackViewModel", "MediaController connection already in progress.")
+            return
+        }
+        connectionJob?.cancel()
+        connectionJob = viewModelScope.launch {
+            try {
+                val sessionToken = SessionToken(
+                    applicationContext,
+                    ComponentName(applicationContext,MusicServiceTest::class.java)
+                )
+                Log.e("checkMediaController", "loading mediaController")
+                mediaControllerFuture = MediaController
+                    .Builder(applicationContext,sessionToken)
+                    .buildAsync()
+                mediaControllerFuture?.addListener(
+                    setListenerForMediaControllerFuture(),
+                    MoreExecutors.directExecutor()
+                )
+            }catch (e:Exception){
+                Log.e("PlaybackViewModel", "Failed to connect to media controller", e)
+                retryConnection()
+            }
+        }
     }
     private fun setListenerForMediaControllerFuture():Runnable{
         return Runnable{
             try {
                 mediaController = mediaControllerFuture?.get()
-                mediaController?.let {
-                    it.addListener(PlayerListener(it))
+                mediaController?.let {controller->
+                    connectionRetryCount = 0
+                    controller.addListener(PlayerListener(controller))
                     Log.e("checkMediaController", "mediaController connection successful")
-                    if (it.playbackState == Player.STATE_IDLE) {
-                        it.prepare()
+                    if (controller.playbackState == Player.STATE_IDLE) {
+                        controller.prepare()
+                    }
+                    _isPlaying.value = controller.isPlaying
+                    _currentMediaPositionInList.value = controller.currentMediaItemIndex
+                    _currentMediaDurationInMs.value = if (controller.duration > 0
+                        && controller.duration != TIME_UNSET) controller.duration else 0L
+                    _currentMediaProgressInMs.value = controller.currentPosition
+                    _isRepeatingClicked.value = controller.repeatMode == Player.REPEAT_MODE_ONE
+                    _isShufflingClicked.value = controller.shuffleModeEnabled
+                    controller.currentMediaItem?.let { item ->
+                        _currentSong.value = item.toSong()
                     }
                 }
             }catch(e:Exception){
                 Log.e("PlaybackViewModel", "MediaController connection failed", e)
+                retryConnection()
             }
         }
     }
     private fun togglePlayback() {
         mediaController?.let { controller ->
-            if (controller.isPlaying) {
-                controller.pause()
-            } else {
-                controller.play()
-            }
+            if (controller.isPlaying) controller.pause() else controller.play()
         }
-    }
-    override fun onCleared() {
-        super.onCleared()
-        mediaControllerFuture?.let { future ->
-            if (!future.isDone) {
-                future.cancel(true)
-            }
-        }
-        mediaController = null
-    }
-    fun MediaItem.toSong():Song{
-        val songPath = this.mediaMetadata.extras?.getString(KEY_SONG_PATH) ?: ""
-        return Song(
-            this.mediaId,
-            this.mediaMetadata.displayTitle.toString(),
-            songPath,
-            this.mediaMetadata.artist.toString(),
-            _currentMediaDurationInMs.value,
-            this.mediaMetadata.albumTitle.toString(),
-            0,
-            this.mediaMetadata.artworkUri.toString(),
-            MIME_TYPE_MP3
-        )
-    }
-    private fun Song.toMediaMetaItem():MediaMetadata{
-        val extras = Bundle().apply {
-            putString(KEY_SONG_PATH, this@toMediaMetaItem.songPath)
-        }
-        return MediaMetadata.Builder()
-            .setTitle(this.songName)
-            .setDisplayTitle(this.songName)
-            .setArtist(this.songArtist)
-            .setAlbumArtist(this.songArtist)
-            .setAlbumTitle(this.songAlbum)
-            .setArtworkUri(Uri.parse(this.songArt))
-            .setExtras(extras)
-            .build()
     }
     private fun moveToSpecificPosition(position: Long) {
         mediaController?.seekTo(position)
@@ -269,16 +259,16 @@ class PlaybackViewModel @Inject constructor(
     inner class PlayerListener(private val mediaController: MediaController):Listener{
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _isPlaying.value = isPlaying
-            if (_isPlaying.value){
-                job?.cancel()
-                job = viewModelScope.launch {
+            if (isPlaying){
+                audioProgressJob?.cancel()
+                audioProgressJob = viewModelScope.launch {
                     while (isActive){
                         updatePlayerProgress(mediaController.currentPosition)
                         delay(ONE_SECOND)
                     }
                 }
             }else{
-                job?.cancel()
+                audioProgressJob?.cancel()
             }
         }
         override fun onPositionDiscontinuity(
@@ -292,53 +282,73 @@ class PlaybackViewModel @Inject constructor(
             setPlaybackStateCases(playbackState,mediaController)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            _currentMediaPosition.value = 0f
-            _currentMediaProgressInMs.value = 0L
+            Log.d(
+                "PlayerListener",
+                "onMediaItemTransition: MediaItem changed. Reason: $reason"
+            )
+            if (reason == MEDIA_ITEM_TRANSITION_REASON_AUTO ||
+                reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+                _currentMediaPosition.value = 0f
+                _currentMediaProgressInMs.value = 0L
+            }
             setSongToPlayNextHandle(reason)
             _currentMediaPositionInList.value = mediaController.currentMediaItemIndex
             mediaItem?.let { mediaItemValue->
                 _currentSong.value = mediaItemValue.toSong()
+                Log.d(
+                    "checkDuration",
+                    "duration from meta: ${mediaItemValue.toSong().songDuration}"
+                )
+                Log.d(
+                    "checkDuration",
+                    "duration from currentSong: ${_currentSong.value.songDuration}"
+                )
                 if (
                     mediaController.duration > 0
                     && mediaController.duration != TIME_UNSET
                 ){
                     _currentMediaDurationInMs.value = mediaController.duration
+                    Log.d(
+                        "checkDuration",
+                        "duration from currentMediaDurationFlow: ${_currentMediaDurationInMs.value}"
+                    )
                 }
             }
         }
     }
+    private suspend fun waitForMediaController() {
+        while (mediaController == null) delay(100)
+    }
     private fun addPlaylistOfAudiosToPlayer(audios:List<Song>){
         viewModelScope.launch {
-            while(mediaController == null){
-                delay(100)
+            if (mediaController == null) {
+                reconnectIfNeeded()
+                delay(1000) // Wait for potential reconnection
             }
+            waitForMediaController()
+            mediaController?.let {controller->
+                val mediaItems = audios.map { item->
+                    val metadata = item.toMediaMetaItem()
+                    MediaItem.Builder().apply {
+                        setMediaId(item.songId)
+                        setUri(item.songPath)
+                        setMediaMetadata(metadata)
+                    }.build()
+                }
+                controller.addMediaItems(mediaItems)
+                controller.prepare()
+                controller.pause()
+                Log.d("PlaybackViewModel", "Playlist added to player and prepared.")
+            } ?: Log.e(
+                "PlaybackViewModel",
+                "MediaController is null, cannot add playlist."
+            )
         }
-        val mediaItems = audios.map { item->
-            val metadata = item.toMediaMetaItem()
-            MediaItem.Builder().apply {
-                setMediaId(item.songId)
-                setUri(item.songPath)
-                setMediaMetadata(metadata)
-            }.build()
-        }
-        mediaController?.addMediaItems(mediaItems)
-        mediaController?.prepare()
-        mediaController?.pause()
     }
     fun getEvent(event:PlayerEvents){
         try {
             when(event){
-                is PlayerEvents.AddPlayList -> {
-                    if (mediaController == null){
-                        setMediaControllerToConnectToMediaSessionService()
-                        viewModelScope.launch {
-                            delay(500)
-                            addPlaylistOfAudiosToPlayer(event.songs)
-                        }
-                    }else{
-                        addPlaylistOfAudiosToPlayer(event.songs)
-                    }
-                }
+                is PlayerEvents.AddPlayList -> addPlaylistOfAudiosToPlayer(event.songs)
                 is PlayerEvents.AddSongToPlayNext -> setSongToPlayNext(event.songId)
                 PlayerEvents.ClearMediaItems -> clearPlayer()
                 is PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList ->
@@ -357,6 +367,78 @@ class PlaybackViewModel @Inject constructor(
             Log.e("PlaybackViewModel", "Error handling player event", e)
         }
 
+    }
+    fun MediaItem.toSong():Song{
+        val songPath = this.mediaMetadata.extras?.getString(KEY_SONG_PATH) ?: ""
+        if (mediaController != null){
+            return Song(
+                this.mediaId,
+                this.mediaMetadata.displayTitle.toString(),
+                songPath,
+                this.mediaMetadata.artist.toString(),
+                mediaController!!.duration,
+                this.mediaMetadata.albumTitle.toString(),
+                0,
+                this.mediaMetadata.artworkUri.toString(),
+                MIME_TYPE_MP3
+            )
+        }else{
+            return Song(
+                "", "", "", "", 0,
+                "", 0, null, ""
+            )
+        }
+    }
+    private fun Song.toMediaMetaItem():MediaMetadata{
+        val extras = Bundle().apply {
+            putString(KEY_SONG_PATH, this@toMediaMetaItem.songPath)
+        }
+        return MediaMetadata.Builder()
+            .setTitle(this.songName)
+            .setDisplayTitle(this.songName)
+            .setArtist(this.songArtist)
+            .setAlbumArtist(this.songArtist)
+            .setAlbumTitle(this.songAlbum)
+            .setArtworkUri(Uri.parse(this.songArt))
+            .setExtras(extras)
+            .build()
+    }
+    fun reconnectIfNeeded() {
+        if (mediaController == null) {
+            Log.d(
+                "PlaybackViewModel",
+                "MediaController is null, attempting to reconnect..."
+            )
+            setMediaControllerToConnectToMediaSessionService()
+        }
+    }
+    private fun retryConnection() {
+        if (connectionRetryCount < maxRetryCount) {
+            connectionRetryCount++
+            Log.d(
+                "PlaybackViewModel",
+                "Retrying connection (attempt $connectionRetryCount)"
+            )
+            viewModelScope.launch {
+                delay(1000 * connectionRetryCount.toLong())
+                setMediaControllerToConnectToMediaSessionService()
+            }
+        } else {
+            Log.e("PlaybackViewModel", "Max retry attempts reached. Connection failed.")
+        }
+    }
+    override fun onCleared() {
+        super.onCleared()
+        connectionJob?.cancel()
+        mediaControllerFuture?.let { future ->
+            if (!future.isDone) {
+                future.cancel(true)
+            }
+            MediaController.releaseFuture(future)
+        }
+        mediaController?.release()
+        mediaController = null
+        audioProgressJob?.cancel()
     }
     companion object{
         private const val KEY_SONG_PATH = "KEY_SONG_PATH"

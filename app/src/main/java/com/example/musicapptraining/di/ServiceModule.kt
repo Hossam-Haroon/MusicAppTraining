@@ -20,7 +20,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object ServiceModule{
+object ServiceModule {
     @Singleton
     @Provides
     fun getAudioAttribute(): AudioAttributes =
@@ -28,6 +28,7 @@ object ServiceModule{
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .setUsage(C.USAGE_MEDIA)
             .build()
+
     @Singleton
     @Provides
     fun providePlayer(
@@ -35,9 +36,10 @@ object ServiceModule{
         audioAttributes: AudioAttributes
     ): ExoPlayer =
         ExoPlayer.Builder(context)
-            .setAudioAttributes(audioAttributes,true)
+            .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
+
     @Singleton
     @Provides
     fun provideMediaSession(

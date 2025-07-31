@@ -81,7 +81,7 @@ class MusicPlayerViewModel
 
     fun getEvent(event : PlayerEvents){
         when(event){
-            is PlayerEvents.AddPlayList -> playerController.addPlayList(event.songs,event.isUpdatePlaylistRequired)
+            is PlayerEvents.AddPlayList -> {}
             is PlayerEvents.AddSongToPlayNext -> playerController.setSongToPlayNext(event.songId)
             PlayerEvents.ClearMediaItems -> playerController.clearPlayer()
             is PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList ->

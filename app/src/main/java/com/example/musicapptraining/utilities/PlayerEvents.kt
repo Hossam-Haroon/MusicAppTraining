@@ -4,8 +4,7 @@ import com.example.musicapptraining.data.model.Song
 
 sealed class PlayerEvents {
     data class AddPlayList(
-        var songs: List<Song>,
-        var isUpdatePlaylistRequired : Boolean
+        var songs: List<Song>
     ): PlayerEvents()
     data class GoToSpecificItem(var index : Int): PlayerEvents()
     data class GoToSpecificPosition(var position : Long): PlayerEvents()
