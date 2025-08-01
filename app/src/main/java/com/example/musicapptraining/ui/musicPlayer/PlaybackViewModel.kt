@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.media3.common.C.TIME_UNSET
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -77,7 +78,7 @@ class PlaybackViewModel @Inject constructor(
             setMediaControllerToConnectToMediaSessionService()
         }
     }
-    fun setMediaControllerToConnectToMediaSessionService(){
+    private fun setMediaControllerToConnectToMediaSessionService(){
         if (mediaControllerFuture != null && !mediaControllerFuture!!.isDone) {
             Log.d("PlaybackViewModel", "MediaController connection already in progress.")
             return
@@ -297,24 +298,17 @@ class PlaybackViewModel @Inject constructor(
             _currentMediaPositionInList.value = mediaController.currentMediaItemIndex
             mediaItem?.let { mediaItemValue->
                 _currentSong.value = mediaItemValue.toSong()
-                Log.d(
-                    "checkDuration",
-                    "duration from meta: ${mediaItemValue.toSong().songDuration}"
-                )
-                Log.d(
-                    "checkDuration",
-                    "duration from currentSong: ${_currentSong.value.songDuration}"
-                )
-                if (
-                    mediaController.duration > 0
-                    && mediaController.duration != TIME_UNSET
-                ){
-                    _currentMediaDurationInMs.value = mediaController.duration
-                    Log.d(
-                        "checkDuration",
-                        "duration from currentMediaDurationFlow: " +
-                                "${_currentMediaDurationInMs.value}"
-                    )
+            }
+        }
+        override fun onEvents(player: Player, events: Player.Events) {
+            if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION) ||
+                events.contains(Player.EVENT_MEDIA_METADATA_CHANGED) ||
+                events.contains(Player.EVENT_PLAYBACK_STATE_CHANGED)) {
+                val duration = player.duration
+                if (duration > 0) {
+                    _currentMediaDurationInMs.value = duration
+                    _currentSong.value = _currentSong.value.copy(songDuration = duration)
+                    Log.d("checkDuration", "Duration updated: $duration")
                 }
             }
         }
@@ -379,7 +373,7 @@ class PlaybackViewModel @Inject constructor(
                 this.mediaMetadata.displayTitle.toString(),
                 songPath,
                 this.mediaMetadata.artist.toString(),
-                mediaController!!.duration,
+                0L,
                 this.mediaMetadata.albumTitle.toString(),
                 0,
                 this.mediaMetadata.artworkUri.toString(),

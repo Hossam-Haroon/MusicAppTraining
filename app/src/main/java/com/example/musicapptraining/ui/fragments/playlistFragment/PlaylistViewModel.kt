@@ -71,7 +71,6 @@ class PlaylistViewModel @Inject constructor(
                 _addSongToPlaylistUiState.value =
                     UiState.Error(e.message ?: "failed to add song")
             }
-
         }
     }
     fun deleteSongFromPlaylist(song: Song,playList: Playlist){
@@ -84,7 +83,6 @@ class PlaylistViewModel @Inject constructor(
                 _deleteSongFromPlaylistUiState.value =
                     UiState.Error(e.message ?: "failed to remove song")
             }
-
         }
     }
 }

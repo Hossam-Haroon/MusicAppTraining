@@ -51,7 +51,7 @@ class SongsFragment :
         checkRequestPermissionLauncher()
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        playerViewModel.reconnectIfNeeded()
+        //playerViewModel.reconnectIfNeeded()
         super.onViewCreated(view, savedInstanceState)
         //playerViewModel.setMediaControllerToConnectToMediaSessionService()
         setAdapterForListOfSongs()
