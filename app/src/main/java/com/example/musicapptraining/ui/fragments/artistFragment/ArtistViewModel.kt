@@ -1,5 +1,6 @@
 package com.example.musicapptraining.ui.fragments.artistFragment
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicapptraining.domain.model.Artist
@@ -8,6 +9,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,9 +25,12 @@ class ArtistViewModel @Inject constructor(
     }
     private fun getAllArtists(){
         viewModelScope.launch {
-            val artists = getAllArtistsUseCase()
-            artists.collect{uiState->
-                _artistListState.value = uiState
+            _artistListState.value = UiState.Loading
+            val artistsFlow = getAllArtistsUseCase()
+            artistsFlow.catch { e->
+                _artistListState.value = UiState.Error("can't load artists: ${e.message}")
+            }.collect{artists->
+                _artistListState.value = UiState.Success(artists)
             }
         }
     }

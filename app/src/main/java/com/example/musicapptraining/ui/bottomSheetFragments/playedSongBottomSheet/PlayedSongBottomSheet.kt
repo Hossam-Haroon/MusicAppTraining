@@ -32,7 +32,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-
 @AndroidEntryPoint
 class PlayedSongBottomSheet:
     BaseBottomSheetDialogFragment<FragmentPlayedSongBottomSheetBinding>(
@@ -85,6 +84,12 @@ class PlayedSongBottomSheet:
                 launch {
                     setMediaDurationInMsObserver()
                 }
+                launch {
+                    addSongToPlaylistUiStateObserver()
+                }
+                launch {
+                    removeSongFromPlaylistObserver()
+                }
             }
         }
     }
@@ -121,39 +126,50 @@ class PlayedSongBottomSheet:
     }
     private fun setCorrectImageBasedOnIsPausePlayClickedValue(state:Boolean){
         if (state){
-            binding.playPauseImage.setImageResource(R.drawable.play_svgrepo_com)
-        }else{
             binding.playPauseImage.setImageResource(R.drawable.pause_svgrepo_com)
+        }else{
+            binding.playPauseImage.setImageResource(R.drawable.play_svgrepo_com)
         }
     }
     private suspend fun setCurrentSongObserver(){
         playerViewModel.currentSong.collect{ currentSong->
             Log.d(CHECK_CURRENT_SONG,"$currentSong")
             setSongDetailsAfterCollectingCurrentSong(currentSong)
-            //setHeartIconForSavedSong()
-            setCorrectHeartIconAfterCheckingIfTheListOfSongsContainsCurrentSong(currentSong)
+
         }
     }
-    private fun setCorrectHeartIconAfterCheckingIfTheListOfSongsContainsCurrentSong(
-        currentSong: Song
-    ){
-        likedPlayedList?.let {
-            when{
-                it.playlistSongs.contains(currentSong) ->{
+    private suspend fun addSongToPlaylistUiStateObserver(){
+        playlistViewModel.addSongToPlaylistUiState.collect{uiState->
+            handleUiState(
+                uiState = uiState,
+                successState = {
                     setHeartIconDetails(
                         icon = R.drawable.yellow_heart_icon,
                         isLiked = true,
                         color = R.color.main_color
                     )
+                },
+                errorState = {message->
+                    Toast.makeText(context,message,Toast.LENGTH_LONG).show()
                 }
-                else ->{
+            )
+        }
+    }
+    private suspend fun removeSongFromPlaylistObserver(){
+        playlistViewModel.deleteSongFromPlaylistUiState.collect{uiState->
+            handleUiState(
+                uiState = uiState,
+                successState = {
                     setHeartIconDetails(
                         icon = R.drawable.heart,
                         isLiked = false,
                         color = R.color.white
                     )
+                },
+                errorState = { message->
+                    Toast.makeText(context,message,Toast.LENGTH_LONG).show()
                 }
-            }
+            )
         }
     }
     private fun setSongDetailsAfterCollectingCurrentSong(currentSong:Song){
@@ -200,7 +216,6 @@ class PlayedSongBottomSheet:
             }
             playPauseImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.PausePlay)
-                isSongPlayedOrPaused()
             }
             nextSongImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.Next)
@@ -235,8 +250,7 @@ class PlayedSongBottomSheet:
                 }
                 override fun onStopTrackingTouch(p0: SeekBar?) {
                 }
-            }
-            )
+            })
         }
     }
     private fun setHeartIconForSavedSong(){
@@ -316,53 +330,10 @@ class PlayedSongBottomSheet:
             repeatOnLifecycle(Lifecycle.State.STARTED){
                 if (!isSongLiked){
                     playlistViewModel.addSongToPlaylist(song,likedPlayedList)
-                    addSongToPlaylistUiStateObserver()
                 }else{
                     playlistViewModel.deleteSongFromPlaylist(song,likedPlayedList)
-                    removeSongFromPlaylistObserver()
                 }
             }
-        }
-    }
-    private suspend fun addSongToPlaylistUiStateObserver(){
-        playlistViewModel.addSongToPlaylistUiState.collect{uiState->
-            handleUiState(
-                uiState = uiState,
-                successState = {
-                    setHeartIconDetails(
-                        icon = R.drawable.yellow_heart_icon,
-                        isLiked = !isSongLiked,
-                        color = R.color.main_color
-                    )
-                },
-                errorState = {message->
-                    Toast.makeText(context,message,Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    }
-    private suspend fun removeSongFromPlaylistObserver(){
-        playlistViewModel.deleteSongFromPlaylistUiState.collect{uiState->
-            handleUiState(
-                uiState = uiState,
-                successState = {
-                    setHeartIconDetails(
-                        icon = R.drawable.heart,
-                        isLiked = !isSongLiked,
-                        color = R.color.white
-                    )
-                },
-                errorState = { message->
-                    Toast.makeText(context,message,Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    }
-    private fun isSongPlayedOrPaused(){
-        if (playerViewModel.isPlaying.value){
-            binding.playPauseImage.setImageResource(R.drawable.play_svgrepo_com)
-        }else{
-            binding.playPauseImage.setImageResource(R.drawable.pause_svgrepo_com)
         }
     }
     companion object{

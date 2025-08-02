@@ -8,10 +8,10 @@ import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.flow.Flow
 
 interface SongRepository {
-    fun getAllSongs(): Flow<UiState<List<Song>>>
-    fun searchSong(songName : String): Flow<UiState<List<Song>>>
-    fun getAlbumSongs(albumName : String): Flow<UiState<Album>>
-    fun getArtistSongs(artistName: String): Flow<UiState<Artist>>
-    fun getPlaylistSongs(playListSong : String): Flow<UiState<Playlist>>
-    suspend fun checkAndRefresh(): UiState<List<Song>>
+    fun getAllSongs(): Flow<List<Song>>
+    fun searchSong(songName : String): Flow<List<Song>>
+    fun getAlbumSongs(albumName : String): Flow<Album>
+    fun getArtistSongs(artistName: String): Flow<Artist>
+    fun getPlaylistSongs(playListSong : String): Flow<Playlist?>
+    suspend fun checkAndRefresh(): List<Song>
 }

@@ -10,6 +10,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,9 +28,12 @@ class AddToPlayListBottomSheetViewModel @Inject constructor(
     }
     private fun getPlayLists(){
         viewModelScope.launch {
-            val playLists = getAllPlaylistsUseCase()
-            playLists.collect{uiState ->
-                _getPlayLists.value = uiState
+            _getPlayLists.value = UiState.Loading
+            val playListsFlow = getAllPlaylistsUseCase()
+            playListsFlow.catch { e->
+                _getPlayLists.value = UiState.Error("can't load playlists: ${e.message}")
+            }.collect{playlists ->
+                _getPlayLists.value = UiState.Success(playlists)
             }
         }
     }

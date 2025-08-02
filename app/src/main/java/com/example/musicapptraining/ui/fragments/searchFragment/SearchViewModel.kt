@@ -10,6 +10,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,18 +27,24 @@ class SearchViewModel @Inject constructor(
         MutableStateFlow(UiState.Loading)
     val artistListState = _artistListState.asStateFlow()
     fun getSearchedSongs(text: String){
+        _songListState.value = UiState.Loading
         viewModelScope.launch {
-            val songs = searchSongUseCase(text)
-            songs.collect{uiState->
-                _songListState.value = uiState
+            val songsFlow = searchSongUseCase(text)
+            songsFlow.catch {e->
+                _songListState.value = UiState.Error("no such song exist:${e.message}")
+            }.collect{songs->
+                _songListState.value = UiState.Success(songs)
             }
         }
     }
     fun getSearchedArtists(text: String){
         viewModelScope.launch {
-            val artists = searchArtistByNameUseCase(text)
-            artists.collect{uiState->
-                _artistListState.value = uiState
+            _artistListState.value = UiState.Loading
+            val searchedArtists = searchArtistByNameUseCase(text)
+            searchedArtists.catch {e->
+                _artistListState.value = UiState.Error("can't load searched artists: ${e.message}")
+            }.collect{artists->
+                _artistListState.value = UiState.Success(artists)
             }
         }
     }

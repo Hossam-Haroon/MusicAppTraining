@@ -13,6 +13,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,9 +43,12 @@ class PlaylistViewModel @Inject constructor(
     }
     private fun getAllPlayLists(){
         viewModelScope.launch {
+            _playListsState.value = UiState.Loading
             val playLists = getAllPlaylistsUseCase()
-            playLists.collect{uiState->
-                _playListsState.value = uiState
+            playLists.catch {e->
+                _playListsState.value = UiState.Error("failed to get playlists: ${e.message}")
+            }.collect{playlists->
+                _playListsState.value = UiState.Success(playlists)
             }
         }
     }
@@ -55,9 +59,18 @@ class PlaylistViewModel @Inject constructor(
     }
     private fun getLikedPlaylist(){
         viewModelScope.launch {
+            _likedPlaylistState.value = UiState.Loading
            val likedPlaylist = getLikedPlaylistUseCase()
-            likedPlaylist.collect{uiState->
-                _likedPlaylistState.value = uiState
+            likedPlaylist.catch {e->
+                _likedPlaylistState.value = UiState.Error(
+                    "failed to get likedPlaylist: ${e.message}"
+                )
+            }.collect{playlist->
+                _likedPlaylistState.value = if (playlist != null){
+                    UiState.Success(playlist)
+                }else{
+                    UiState.Error("likedPlaylist is empty")
+                }
             }
         }
     }

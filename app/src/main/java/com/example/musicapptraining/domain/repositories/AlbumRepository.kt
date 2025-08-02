@@ -5,6 +5,6 @@ import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.flow.Flow
 
 interface AlbumRepository {
-    fun getAllAlbums(): Flow<UiState<List<Album>>>
-    fun searchAlbumByName(text : String): Flow<UiState<List<Album>>>
+    fun getAllAlbums(): Flow<List<Album>>
+    fun searchAlbumByName(text : String): Flow<List<Album>>
 }

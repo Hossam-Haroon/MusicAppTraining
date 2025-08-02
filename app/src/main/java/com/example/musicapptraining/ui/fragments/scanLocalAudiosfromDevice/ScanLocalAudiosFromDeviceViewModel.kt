@@ -25,7 +25,7 @@ class ScanLocalAudiosFromDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             _audioListState.value = UiState.Loading
             val checkedAudios = checkAndRefreshUseCase()
-            _audioListState.value = checkedAudios
+            _audioListState.value = UiState.Success(checkedAudios)
         }
     }
 }

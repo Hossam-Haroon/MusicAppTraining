@@ -6,9 +6,9 @@ import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
-    fun getPlayLists(): Flow<UiState<List<Playlist>>>
+    fun getPlayLists(): Flow<List<Playlist>>
     suspend fun addNewPlayList(playlistName : String)
     suspend fun addSongToPlayList(song : Song, playList: Playlist)
-    fun getLikedPlaylist(): Flow<UiState<Playlist>>
+    fun getLikedPlaylist(): Flow<Playlist?>
     suspend fun deleteSongFromPlayList(song: Song, playList: Playlist)
 }

@@ -8,7 +8,7 @@ import javax.inject.Inject
 class CheckAndRefreshUseCase @Inject constructor(
     private val songRepository: SongRepository
 ) {
-    suspend operator fun invoke(): UiState<List<Song>> {
+    suspend operator fun invoke(): List<Song> {
         return songRepository.checkAndRefresh()
     }
 }

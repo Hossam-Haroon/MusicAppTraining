@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -34,108 +35,48 @@ class SongRepositoryImpl @Inject constructor(
     private val musicDao: MusicDao,
     private val context: Context
 ):SongRepository {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getAllSongs(): Flow<UiState<List<Song>>> {
-        return flow {
-            emit(UiState.Loading)
-            val databaseSongs = musicDao.getAllSongs().first().toDomain()
-            if (databaseSongs.isNotEmpty()){
-                emit(UiState.Success(databaseSongs))
-                return@flow
-            }
-            if (!isPermissionGranted()){
-                emit(UiState.Error(PERMISSION_DISALLOWED))
-                return@flow
-            }
-            try {
-                val fetchedSongs = fetchAllAudiosFromDevice().toEntity()
-                musicDao.deleteSongs()
-                musicDao.insertAllSongs(fetchedSongs)
-            }catch (e: Exception){
-                emit(UiState.Error(ERROR_MESSAGE))
-            }
-        }.flatMapLatest {
-            musicDao.getAllSongs()
-                .map { it.toDomain() }
-                .map { UiState.Success(it) }
-                .catch { UiState.Error(ERROR_MESSAGE) }
-        }
-    }
-    override fun searchSong(songName: String): Flow<UiState<List<Song>>> {
-        return flow {
-            emit(UiState.Loading)
-            val searchedSongs =  musicDao.searchSongsName(songName).toDomain()
-            if (searchedSongs.isNotEmpty()){
-                emit(UiState.Success(searchedSongs))
-                return@flow
-            }
-        }
-    }
-    override fun getAlbumSongs(albumName: String): Flow<UiState<Album>> {
-        return flow{
-            emit(UiState.Loading)
-            try {
-                val album = musicDao.getAlbumByName(albumName).toDomain()
-                emit(UiState.Success(album))
-            }catch (e:Exception){
-                e.message?.let {
-                    emit(UiState.Error(it))
+    override fun getAllSongs(): Flow<List<Song>> {
+        return musicDao.getAllSongs()
+            .map { it.toDomain() }
+            .onStart {
+                val songs = musicDao.getAllSongs().first()
+                if (songs.isEmpty()){
+                    val fetchedSongs = fetchAllAudiosFromDevice().toEntity()
+                    musicDao.deleteSongs()
+                    musicDao.insertAllSongs(fetchedSongs)
                 }
             }
-        }
     }
-    override fun getArtistSongs(artistName: String): Flow<UiState<Artist>> {
-        return flow{
-            emit(UiState.Loading)
-            try {
-                val artist = musicDao.getArtistByName(artistName).toDomain()
-                emit(UiState.Success(artist))
-            }catch (e:Exception){
-                e.message?.let {
-                    UiState.Error(it)
-                }
-            }
-        }
+    override fun searchSong(songName: String): Flow<List<Song>> {
+        return musicDao.searchSongsName(songName).map{it.toDomain()}
     }
-    override fun getPlaylistSongs(playListSong: String): Flow<UiState<Playlist>> {
-        return flow {
-            emit(UiState.Loading)
-            try {
-                val playList = musicDao.getPlayListByName(playListSong)?.toDomain()
-                playList?.let {
-                    emit(UiState.Success(playList))
-                } ?: emit(UiState.Error("can't find playlist"))
-            }catch (e:Exception){
-                e.message?.let {
-                    UiState.Error(it)
-                }
-            }
-        }
+    override fun getAlbumSongs(albumName: String): Flow<Album> {
+        return musicDao.getAlbumByName(albumName).map { it.toDomain() }
+
     }
-    override suspend fun checkAndRefresh(): UiState<List<Song>> {
-        if (!isPermissionGranted()){
-            return UiState.Error(PERMISSION_DISALLOWED)
-        }
-        return try{
-            val deviceSongs = fetchAllAudiosFromDevice()
-            val localSongs = musicDao.getAllSongs().first().toDomain()
-            val sortedDeviceSongs = deviceSongs.sortedBy { it.songId }
-            val sortedLocalSongs = localSongs.sortedBy { it.songId }
-            checkIfLocalDataBaseHasTheSameDataAsTheDevice(sortedLocalSongs, sortedDeviceSongs)
-        }catch (e: Exception){
-            UiState.Error(e.localizedMessage ?: ERROR_MESSAGE)
-        }
+    override fun getArtistSongs(artistName: String): Flow<Artist> {
+        return musicDao.getArtistByName(artistName).map {it.toDomain()}
+    }
+    override fun getPlaylistSongs(playListSong: String): Flow<Playlist?> {
+        return musicDao.getPlayListByName(playListSong).map { it?.toDomain() }
+    }
+    override suspend fun checkAndRefresh(): List<Song> {
+        val deviceSongs = fetchAllAudiosFromDevice()
+        val localSongs = musicDao.getAllSongs().first().toDomain()
+        val sortedDeviceSongs = deviceSongs.sortedBy { it.songId }
+        val sortedLocalSongs = localSongs.sortedBy { it.songId }
+        return checkIfLocalDataBaseHasTheSameDataAsTheDevice(sortedLocalSongs, sortedDeviceSongs)
     }
     private suspend fun checkIfLocalDataBaseHasTheSameDataAsTheDevice(
         localSongs: List<Song>,
         deviceSongs:List<Song>
-    ): UiState.Success<List<Song>> {
+    ): List<Song> {
         return if (localSongs != deviceSongs) {
             musicDao.deleteSongs()
             musicDao.insertAllSongs(deviceSongs.toEntity())
-            UiState.Success(deviceSongs)
+            deviceSongs
         }else{
-            UiState.Success(localSongs)
+            localSongs
         }
     }
     private fun fetchAllAudiosFromDevice(): List<Song> {

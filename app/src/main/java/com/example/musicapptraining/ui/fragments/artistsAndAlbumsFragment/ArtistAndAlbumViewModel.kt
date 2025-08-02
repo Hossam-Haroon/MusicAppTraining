@@ -12,6 +12,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,28 +33,40 @@ class ArtistAndAlbumViewModel @Inject constructor(
     private var _playListAudioList : MutableStateFlow<UiState<Playlist>> =
         MutableStateFlow(UiState.Loading)
     val playListAudioList = _playListAudioList.asStateFlow()
-
     fun getArtistAudioList(artistName: String){
         viewModelScope.launch {
-           val artist =  getArtistSongsUseCase(artistName)
-            artist.collect{resource->
-                _artistAudioList.value = resource
+            _artistAudioList.value = UiState.Loading
+           val artistFlow =  getArtistSongsUseCase(artistName)
+            artistFlow.catch { e->
+                _artistAudioList.value = UiState.Error("can't load artist songs:${e.message}")
+            }.collect{artist->
+                _artistAudioList.value = UiState.Success(artist)
             }
         }
     }
     fun getAlbumAudioList(albumName : String){
         viewModelScope.launch {
-            val album = getAlbumSongsUseCase(albumName)
-            album.collect{resource->
-                _albumAudioList.value = resource
+            _albumAudioList.value = UiState.Loading
+            val albumFlow = getAlbumSongsUseCase(albumName)
+            albumFlow.catch { e->
+                _albumAudioList.value = UiState.Error("can't load album songs:${e.message}")
+            }.collect{album->
+                _albumAudioList.value = UiState.Success(album)
             }
         }
     }
     fun getPlaylistAudioList(playListName: String){
         viewModelScope.launch{
+            _playListAudioList.value = UiState.Loading
             val playList = getPlaylistSongsUseCase(playListName)
-            playList.collect{resource->
-                _playListAudioList.value = resource
+            playList.catch { e->
+                _playListAudioList.value = UiState.Error("can't load playlist songs:${e.message}")
+            }.collect{playlist->
+                _playListAudioList.value = if (playlist != null){
+                    UiState.Success(playlist)
+                }else{
+                    UiState.Error("playlist is empty")
+                }
             }
         }
     }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -29,35 +30,22 @@ class AlbumRepositoryImpl @Inject constructor(
     private val musicDao: MusicDao,
     private val context: Context
 ):AlbumRepository {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getAllAlbums(): Flow<UiState<List<Album>>> {
-        return flow {
-            emit(UiState.Loading)
-            val albums = musicDao.getAllAlbums().first()
-            if (albums.isNotEmpty()){
-                emit(UiState.Success(albums))
-                return@flow
+    override fun getAllAlbums(): Flow<List<Album>> {
+        return musicDao.getAllAlbums()
+            .map { it.toDomain() }
+            .onStart {
+                val albums = musicDao.getAllAlbums().first()
+                if (albums.isEmpty()){
+                    val fetchedAlbums = fetchAllAlbumsFromDevice().toEntity()
+                    musicDao.insertAllAlbums(fetchedAlbums)
+                }
             }
-            try {
-                val fetchedAlbums = fetchAllAlbumsFromDevice().toEntity()
-                musicDao.insertAllAlbums(fetchedAlbums)
-            }catch (e : Exception){
-                emit(UiState.Error(ERROR_MESSAGE))
-            }
-        }.flatMapLatest {
-            musicDao.getAllAlbums()
-                .map { it.toDomain() }
-                .map { UiState.Success(it) }
-                .catch { UiState.Error(ERROR_MESSAGE) }
-        }
     }
-
-    override fun searchAlbumByName(text: String): Flow<UiState<List<Album>>> {
+    override fun searchAlbumByName(text: String):Flow<List<Album>> {
         return flow{
-            emit(UiState.Loading)
             val cachedAlbum = musicDao.searchAlbumName(text).toDomain()
             if (cachedAlbum.isNotEmpty()){
-                emit(UiState.Success(cachedAlbum))
+                emit(cachedAlbum)
                 return@flow
             }
         }
@@ -71,7 +59,6 @@ class AlbumRepositoryImpl @Inject constructor(
         }
         albumList.addAll(albumHashMap.values)
         return albumList
-
     }
     private fun setCursorResultAfterMovingThroughAllData(
         cursor: Cursor,

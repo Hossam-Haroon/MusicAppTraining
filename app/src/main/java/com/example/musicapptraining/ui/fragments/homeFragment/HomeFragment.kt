@@ -81,9 +81,9 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::infl
     }
     private fun setCorrectImageBasedOnIsPausePlayClickedValue(state:Boolean){
         if (state){
-            binding.ivPlayPause.setImageResource(R.drawable.play_svgrepo_com)
-        }else{
             binding.ivPlayPause.setImageResource(R.drawable.pause_svgrepo_com)
+        }else{
+            binding.ivPlayPause.setImageResource(R.drawable.play_svgrepo_com)
         }
     }
     private fun setCLickListeners(){

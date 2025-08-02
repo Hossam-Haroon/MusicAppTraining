@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -28,42 +29,20 @@ class ArtistRepositoryImpl @Inject constructor(
     private val musicDao: MusicDao,
     private val context: Context
 ):ArtistRepository {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getArtists(): Flow<UiState<List<Artist>>> {
-        return flow {
-            emit(UiState.Loading)
-            val artists = musicDao.getAllArtists().first()
-            if (artists.isNotEmpty()){
-                emit(UiState.Success(artists))
+    override fun getArtists(): Flow<List<Artist>> {
+        return musicDao.getAllArtists()
+            .map { it.toDomain() }
+            .onStart {
+                val artists = musicDao.getAllArtists().first()
+                if (artists.isEmpty()){
+                    val fetchedArtists = fetchAllArtistsFromDevice().toEntity()
+                    musicDao.insertAllArtists(fetchedArtists)
+                }
             }
-            try {
-                val fetchedArtists = fetchAllArtistsFromDevice().toEntity()
-                musicDao.insertAllArtists(fetchedArtists)
-            }catch (e: Exception){
-                emit(UiState.Error(ERROR_MESSAGE))
-            }
-        }.flatMapLatest {
-            musicDao.getAllArtists()
-                .map { it.toDomain() }
-                .map { UiState.Success(it) }
-                .catch { UiState.Error(ERROR_MESSAGE) }
-        }
     }
-
-    override fun searchArtistByName(text: String): Flow<UiState<List<Artist>>> {
-        return flow {
-            emit(UiState.Loading)
-            val cachedArtist = musicDao.searchArtistName(text).toDomain()
-            if (cachedArtist.isNotEmpty()){
-                emit(UiState.Success(cachedArtist))
-                return@flow
-            }
-        }
+    override fun searchArtistByName(text: String): Flow<List<Artist>> {
+        return musicDao.searchArtistName(text).map{ it.toDomain() }
     }
-
-    /*override suspend fun insertArtist(artistName: String) {
-        musicDao.insertArtist(Artist(artistName, mutableListOf()).toEntity())
-    }*/
     private fun fetchAllArtistsFromDevice(): List<Artist> {
         val artistHashMap = HashMap<String,Artist>()
         val artists = mutableListOf<Artist>()
@@ -80,9 +59,11 @@ class ArtistRepositoryImpl @Inject constructor(
         artistHashMap: HashMap<String, Artist>
     ){
         cursor.use {
+            var songCount = 0
             while (it.moveToNext()){
+                songCount++
                 val song = getSongDataFromCursorAndMakeAnInstanceOfSong(it)
-                checkIfSongPathIsValidateAndCheckAlbumExistenceAndAddItToList(
+                checkIfSongPathIsValidateAndCheckArtistExistenceAndAddItToList(
                     song,
                     song.songArtist,
                     artistHashMap
@@ -90,7 +71,7 @@ class ArtistRepositoryImpl @Inject constructor(
             }
         }
     }
-    private fun checkIfSongPathIsValidateAndCheckAlbumExistenceAndAddItToList(
+    private fun checkIfSongPathIsValidateAndCheckArtistExistenceAndAddItToList(
         song: Song,
         songArtist : String,
         artistHashMap: HashMap<String, Artist>

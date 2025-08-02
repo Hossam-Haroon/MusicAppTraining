@@ -9,7 +9,7 @@ import javax.inject.Inject
 class SearchArtistByNameUseCase @Inject constructor(
     private val artistRepository: ArtistRepository
 ) {
-    operator fun invoke(artistName:String): Flow<UiState<List<Artist>>>{
+    operator fun invoke(artistName:String): Flow<List<Artist>>{
         return artistRepository.searchArtistByName(artistName)
     }
 }

@@ -4,15 +4,11 @@ package com.example.musicapptraining.ui.musicPlayer
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.os.Bundle
 import android.util.Log
 import androidx.media3.common.C.TIME_UNSET
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
@@ -22,6 +18,8 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.player.MusicService
+import com.example.musicapptraining.ui.mappers.toMediaMetaItem
+import com.example.musicapptraining.ui.mappers.toSong
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -67,6 +65,8 @@ class PlaybackViewModel @Inject constructor(
         "",0,"",0,null,"")
     )
     val currentSong = _currentSong.asStateFlow()
+    private var _isSongLiked = MutableStateFlow(false)
+    val isSongLiked = _isSongLiked.asStateFlow()
     init {
         initializeService()
     }
@@ -213,8 +213,8 @@ class PlaybackViewModel @Inject constructor(
         return -1
     }
     private fun moveToSpecificItem(itemIndex : Int){
-        mediaController?.let {
-            it.apply {
+        mediaController?.let {controller->
+            controller.apply {
                 seekTo(itemIndex,0L)
                 play()
                 _currentSong.value =currentMediaItem!!.toSong()
@@ -363,42 +363,6 @@ class PlaybackViewModel @Inject constructor(
         }catch (e:Exception){
             Log.e("PlaybackViewModel", "Error handling player event", e)
         }
-
-    }
-    fun MediaItem.toSong():Song{
-        val songPath = this.mediaMetadata.extras?.getString(KEY_SONG_PATH) ?: ""
-        if (mediaController != null){
-            return Song(
-                this.mediaId,
-                this.mediaMetadata.displayTitle.toString(),
-                songPath,
-                this.mediaMetadata.artist.toString(),
-                0L,
-                this.mediaMetadata.albumTitle.toString(),
-                0,
-                this.mediaMetadata.artworkUri.toString(),
-                MIME_TYPE_MP3
-            )
-        }else{
-            return Song(
-                "", "", "", "", 0,
-                "", 0, null, ""
-            )
-        }
-    }
-    private fun Song.toMediaMetaItem():MediaMetadata{
-        val extras = Bundle().apply {
-            putString(KEY_SONG_PATH, this@toMediaMetaItem.songPath)
-        }
-        return MediaMetadata.Builder()
-            .setTitle(this.songName)
-            .setDisplayTitle(this.songName)
-            .setArtist(this.songArtist)
-            .setAlbumArtist(this.songArtist)
-            .setAlbumTitle(this.songAlbum)
-            .setArtworkUri(Uri.parse(this.songArt))
-            .setExtras(extras)
-            .build()
     }
     fun reconnectIfNeeded() {
         if (mediaController == null) {
@@ -438,8 +402,6 @@ class PlaybackViewModel @Inject constructor(
         audioProgressJob?.cancel()
     }
     companion object{
-        private const val KEY_SONG_PATH = "KEY_SONG_PATH"
-        private const val MIME_TYPE_MP3 = "mp3"
         private const val ONE_SECOND = 1000L
     }
 }

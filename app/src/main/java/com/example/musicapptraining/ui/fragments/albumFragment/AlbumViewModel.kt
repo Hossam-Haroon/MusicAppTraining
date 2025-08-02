@@ -23,15 +23,13 @@ class AlbumViewModel @Inject constructor(
     fun getAllAlbums(){
         viewModelScope.launch {
             _albumsListState.value = UiState.Loading
-           val albums =  getAllAlbumsUseCase()
-            albums.collect{uiState->
-                when(uiState){
-                    is UiState.Error -> Log.d("error",uiState.message)
-                    UiState.Loading -> {}
-                    is UiState.Success -> {
-                        _albumsListState.value = uiState
-                    }
+           val albums = getAllAlbumsUseCase()
+            try {
+                albums.collect{uiState->
+                    _albumsListState.value = UiState.Success(uiState)
                 }
+            }catch (e:Exception){
+                _albumsListState.value = UiState.Error("Failed to load albums: ${e.message}")
             }
         }
     }

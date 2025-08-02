@@ -13,23 +13,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 
 class PlaylistRepositoryImpl @Inject constructor(
     private val musicDao: MusicDao
 ):PlaylistRepository {
-    override fun getPlayLists(): Flow<UiState<List<Playlist>>> = flow {
-        emit(UiState.Loading)
-        try {
-            val allPlayLists = musicDao.getAllPlaylists()
-            val checkedList = checkIfPlaylistsAreEmptyOrNot(allPlayLists.map {
-                it.toDomain()
-            })
-            emit(UiState.Success(checkedList))
-        }catch (e:Exception){
-            e.message?.let {
-                emit(UiState.Error(it))
-            }
+    override fun getPlayLists(): Flow<List<Playlist>>{
+        return musicDao.getAllPlaylists().map {
+            it.toDomain()
+        }.onStart {
+            checkIfPlaylistsAreEmptyOrNot()
         }
     }
     override suspend fun addNewPlayList(playlistName: String) {
@@ -39,30 +33,16 @@ class PlaylistRepositoryImpl @Inject constructor(
         val updatedSongs = playList.playlistSongs.toMutableList().apply { add(song) }
         musicDao.insertPlayList(playList.copy(playlistSongs = updatedSongs).toEntity())
     }
-    override fun getLikedPlaylist(): Flow<UiState<Playlist>> {
-        return flow {
-            emit(UiState.Loading)
-            try {
-                val likedPlaylist = musicDao.getPlayListByName(LIKED_AUDIOS)?.toDomain()
-                likedPlaylist?.let {
-                    emit(UiState.Success(it))
-                } ?: emit(UiState.Error("Liked playlist not found"))
-            }catch (e:Exception){
-                e.message?.let {
-                    emit(UiState.Error(it))
-                }
-            }
-        }
+    override fun getLikedPlaylist(): Flow<Playlist?>{
+        return musicDao.getPlayListByName(LIKED_AUDIOS).map{ it?.toDomain() }
     }
     override suspend fun deleteSongFromPlayList(song: Song, playList: Playlist) {
         val updatedSongs = playList.playlistSongs.toMutableList().apply { remove(song) }
         musicDao.insertPlayList(playList.copy(playlistSongs = updatedSongs).toEntity())
     }
-    private suspend fun checkIfPlaylistsAreEmptyOrNot(
-        playlists: Flow<List<Playlist>>
-    ):List<Playlist>{
-        val list = playlists.first()
-        return list.ifEmpty {
+    private suspend fun checkIfPlaylistsAreEmptyOrNot(){
+        val list = musicDao.getAllPlaylists().first()
+        if(list.isEmpty()){
             makeDefaultPlaylists()
         }
     }

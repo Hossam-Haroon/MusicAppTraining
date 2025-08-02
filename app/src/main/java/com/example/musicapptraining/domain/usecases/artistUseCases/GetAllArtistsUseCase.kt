@@ -9,7 +9,7 @@ import javax.inject.Inject
 class GetAllArtistsUseCase @Inject constructor(
     private val artistRepository: ArtistRepository
 ) {
-    operator fun invoke(): Flow<UiState<List<Artist>>>{
+    operator fun invoke(): Flow<List<Artist>>{
         return artistRepository.getArtists()
     }
 }

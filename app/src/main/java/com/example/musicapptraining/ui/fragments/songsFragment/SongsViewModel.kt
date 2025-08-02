@@ -9,6 +9,7 @@ import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,39 +20,15 @@ class SongsViewModel @Inject constructor(
     private var _songListState : MutableStateFlow<UiState<List<Song>>>
     = MutableStateFlow(UiState.Loading)
     var songListState = _songListState.asStateFlow()
-    private var hasLoadedData = false
     fun fetchAllMusic(){
         viewModelScope.launch {
+            _songListState.value = UiState.Loading
             val cachedAudio = getAllSongsUseCase()
-            Log.d("check music fetching","no fetching")
-            cachedAudio.collect{ resource->
-                _songListState.value = resource
+            cachedAudio.catch {e->
+                _songListState.value = UiState.Error("can't load audios:${e.message}")
+            }.collect{ songs->
+                _songListState.value = UiState.Success(songs)
             }
         }
-    }
-   /* fun fetchAllMusic(){
-        when{
-            dataIsLoadedAndSongListStateIsSuccess() -> {
-                return
-            }
-            songListStateIsLoading() -> {
-                return
-            }
-            else -> {
-                hasLoadedData = true
-                viewModelScope.launch {
-                    val cachedAudio = songRepository.getAllSongs()
-                    cachedAudio.collect{ resource->
-                        _songListState.value = resource
-                    }
-                }
-            }
-        }
-    }*/
-    private fun dataIsLoadedAndSongListStateIsSuccess():Boolean{
-        return hasLoadedData && _songListState.value is UiState.Success
-    }
-    private fun songListStateIsLoading():Boolean{
-        return _songListState.value is UiState.Loading
     }
 }

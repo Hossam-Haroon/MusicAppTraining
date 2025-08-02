@@ -1,6 +1,7 @@
 package com.example.musicapptraining.ui.fragments.artistFragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -35,8 +36,8 @@ class ArtistFragment : BaseFragment<FragmentArtistBinding>(FragmentArtistBinding
                         binding.apply {
                             handleUiState(
                                 uiState = uiState,
-                                successState = {
-                                    val sortedList = currentList.sortedByDescending {it.artistName}
+                                successState = {artists->
+                                    val sortedList = artists.sortedByDescending {it.artistName}
                                     submitList(sortedList)
                                     artistsCountTv.text = getString(
                                         R.string.artist_count,

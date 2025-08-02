@@ -45,6 +45,16 @@ fun formatDuration(durationMs: Long): String {
         String.format(Locale.US,"%02d:%02d", minutes, seconds)
     }
 }
+fun tryAndCatchBlock(
+    tryBlock : ()-> Unit,
+    catchBlock: (Exception)->Unit
+){
+    try {
+        tryBlock()
+    }catch (e:Exception){
+        catchBlock(e)
+    }
+}
 class BaseDiffCallback<T>(
     private val itemsTheSame : (oldItem:T,newItem:T) -> Boolean,
     private val contentsTheSame: (oldItem:T,newItem:T) -> Boolean

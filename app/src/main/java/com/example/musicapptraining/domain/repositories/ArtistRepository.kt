@@ -5,8 +5,8 @@ import com.example.musicapptraining.utilities.UiState
 import kotlinx.coroutines.flow.Flow
 
 interface ArtistRepository {
-    fun getArtists(): Flow<UiState<List<Artist>>>
-    fun searchArtistByName(text : String): Flow<UiState<List<Artist>>>
+    fun getArtists(): Flow<List<Artist>>
+    fun searchArtistByName(text : String): Flow<List<Artist>>
     //suspend fun insertArtist(artistName: String)
 
 }

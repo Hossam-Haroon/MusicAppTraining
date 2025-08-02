@@ -34,13 +34,13 @@ interface MusicDao {
     suspend fun insertArtist(artist: ArtistEntity)
 
     @Query("SELECT * FROM ArtistEntity WHERE artistName = :name")
-    suspend fun getArtistByName(name : String): ArtistEntity
+    fun getArtistByName(name : String): Flow<ArtistEntity>
 //-------------------------------------------------------
     @Query("SELECT * FROM AlbumEntity")
     fun getAllAlbums(): Flow<List<AlbumEntity>>
 
     @Query("SELECT * FROM AlbumEntity WHERE albumName= :name")
-    suspend fun getAlbumByName(name: String):AlbumEntity
+    fun getAlbumByName(name: String):Flow<AlbumEntity>
 
     @Query("SELECT * FROM AlbumEntity WHERE albumID= :albumId")
     suspend fun getAlbumById(albumId: String):AlbumEntity
@@ -52,16 +52,16 @@ interface MusicDao {
     fun getAllPlaylists(): Flow<List<PlaylistEntity>>
 
     @Query("SELECT * FROM PlaylistEntity WHERE playlistName = :name")
-    suspend fun getPlayListByName(name: String): PlaylistEntity?
+    fun getPlayListByName(name: String): Flow<PlaylistEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayList(playList: PlaylistEntity)
 //------------------------------------------------------------
     @Query("SELECT * FROM SongEntity WHERE songName LIKE '%' || :text || '%'")
-    suspend fun searchSongsName(text : String): List<SongEntity>
+    fun searchSongsName(text : String): Flow<List<SongEntity>>
 
     @Query("SELECT * FROM ArtistEntity WHERE artistName like '%' || :text || '%'")
-    suspend fun searchArtistName(text : String): List<ArtistEntity>
+    fun searchArtistName(text : String): Flow<List<ArtistEntity>>
 
     @Query("SELECT * FROM AlbumEntity WHERE albumName LIKE '%' || :text || '%'")
     suspend fun searchAlbumName(text : String): List<AlbumEntity>

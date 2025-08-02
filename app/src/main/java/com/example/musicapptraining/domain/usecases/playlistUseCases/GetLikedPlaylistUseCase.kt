@@ -9,7 +9,7 @@ import javax.inject.Inject
 class GetLikedPlaylistUseCase @Inject constructor(
     private val playlistRepository: PlaylistRepository
 ) {
-    operator fun invoke(): Flow<UiState<Playlist>>{
+    operator fun invoke(): Flow<Playlist?>{
         return playlistRepository.getLikedPlaylist()
     }
 }

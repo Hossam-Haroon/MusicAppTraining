@@ -9,7 +9,7 @@ import javax.inject.Inject
 class GetAllAlbumsUseCase @Inject constructor(
     private val albumRepository: AlbumRepository
 ) {
-    operator fun invoke(): Flow<UiState<List<Album>>> {
+    operator fun invoke(): Flow<List<Album>> {
         return albumRepository.getAllAlbums()
     }
 }
