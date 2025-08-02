@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/black"
-    tools:context=".ui.fragments.playlistFragment.PlaylistFragment">
+    tools:context=".presentation.fragments.playlistFragment.PlaylistFragment">
 
 
     <androidx.recyclerview.widget.RecyclerView

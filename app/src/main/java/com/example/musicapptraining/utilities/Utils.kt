@@ -2,7 +2,7 @@ package com.example.musicapptraining.utilities
 import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.ListAdapter
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.ui.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
+import com.example.musicapptraining.presentation.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
 import java.util.Locale
 
 val sortComparator : Map<SortOptions , Comparator<Song>> = mapOf(
