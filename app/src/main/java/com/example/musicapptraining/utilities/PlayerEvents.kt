@@ -11,7 +11,6 @@ sealed class PlayerEvents {
     data class GoToSpecificPosition(var position : Long): PlayerEvents()
     data class AddSongToPlayNext(var songId: String): PlayerEvents()
     data class GetThePositionOfSpecificSongInsideThePlayList(var id : String): PlayerEvents()
-
     object PausePlay : PlayerEvents()
     object Repeat : PlayerEvents()
     object Shuffle: PlayerEvents()

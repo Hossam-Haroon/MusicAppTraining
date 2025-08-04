@@ -78,6 +78,11 @@ class PlaybackViewModel @Inject constructor(
             setMediaControllerToConnectToMediaSessionService()
         }
     }
+    fun checkServiceConnection() {
+        Log.d("PlaybackViewModel", "MediaController status: ${mediaController != null}")
+        Log.d("PlaybackViewModel", "Is playing: ${mediaController?.isPlaying}")
+        Log.d("PlaybackViewModel", "Playback state: ${mediaController?.playbackState}")
+    }
     private fun setMediaControllerToConnectToMediaSessionService(){
         if (mediaControllerFuture != null && !mediaControllerFuture!!.isDone) {
             Log.d("PlaybackViewModel", "MediaController connection already in progress.")

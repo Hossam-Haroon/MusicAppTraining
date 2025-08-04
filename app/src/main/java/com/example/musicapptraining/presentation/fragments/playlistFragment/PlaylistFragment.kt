@@ -8,12 +8,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicapptraining.databinding.FragmentPlaylistBinding
+import com.example.musicapptraining.domain.model.Playlist
 import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.presentation.fragments.homeFragment.HomeFragmentDirections
+import com.example.musicapptraining.presentation.navigation.DefaultMediaNavigator
+import com.example.musicapptraining.presentation.navigation.NavigableMedia
 import com.example.musicapptraining.utilities.PlaylistItem
+import com.example.musicapptraining.utilities.UiState
 import com.example.musicapptraining.utilities.handleUiState
+import com.example.musicapptraining.utilities.setAdapterData
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -23,49 +27,46 @@ class PlaylistFragment : BaseFragment<FragmentPlaylistBinding>(
 ) {
     private val playlistViewModel: PlaylistViewModel by activityViewModels()
     private val playlistAdapter by lazy { PlayListAdapter() }
+    private lateinit var defaultMediaNavigator : DefaultMediaNavigator
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setAdapter()
+        defaultMediaNavigator = DefaultMediaNavigator(findNavController())
+        setPlaylistAdapterClickListeners(defaultMediaNavigator)
         setViewModelObservers()
-        setAdapterCLickListeners()
     }
     private fun setViewModelObservers(){
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
                 playlistViewModel.playListsState.collect { uiState ->
-                    with(playlistAdapter){
-                        handleUiState(
-                            uiState = uiState,
-                            successState = {playLists ->
-                                val itemsForAdapter = playLists.map {
-                                    PlaylistItem.PlaylistContent(it)
-                                } + PlaylistItem.AddPlaylistButton
-                                submitList(itemsForAdapter)
-                                Log.d(CHECK_PLAYLISTS_RESULT, "Inserted playlist: $playLists")
-                            },
-                            errorState = {message->
-                                Log.d(CHECK_PLAYLISTS_EXISTENCE,message)
-                            }
-                        )
-                    }
+                    setPlaylistStateObserver(uiState)
                 }
             }
         }
     }
-    private fun setAdapterCLickListeners(){
+    private fun setPlaylistStateObserver(uiState: UiState<List<Playlist>>){
+        with(playlistAdapter){
+            handleUiState(
+                uiState = uiState,
+                successState = {playLists ->
+                    val itemsForAdapter = playLists.map {
+                        PlaylistItem.PlaylistContent(it)
+                    } + PlaylistItem.AddPlaylistButton
+                    submitList(itemsForAdapter)
+                    Log.d(CHECK_PLAYLISTS_RESULT, "Inserted playlist: $playLists")
+                },
+                errorState = {message->
+                    Log.d(CHECK_PLAYLISTS_EXISTENCE,message)
+                }
+            )
+        }
+    }
+    private fun setPlaylistAdapterClickListeners(defaultMediaNavigator:DefaultMediaNavigator){
+        binding.playlistRv.setAdapterData(playlistAdapter)
         playlistAdapter.apply {
             setOnItemClickListener { playList ->
-                try {
-                    val action = HomeFragmentDirections.
-                    actionHomeFragmentToArtistsAndAlbumsAndPlaylistsFragment(
-                        artistName = "",
-                        playListName = playList.playlistName,
-                        albumName = ""
-                    )
-                    findNavController().navigate(action)
-                }catch (e: Exception) {
-                    Log.d(CHECK_PLAYLIST_ERROR, "${e.message}")
-                }
+                defaultMediaNavigator.openSelectedMedia(
+                    NavigableMedia.PlaylistMedia(playList.playlistName)
+                )
             }
             setOnNewPlaListClickListener {
                 val action = HomeFragmentDirections.actionHomeFragmentToAddNewPlayListFragment()
@@ -73,15 +74,7 @@ class PlaylistFragment : BaseFragment<FragmentPlaylistBinding>(
             }
         }
     }
-    private fun setAdapter() {
-        binding.playlistRv.apply {
-            adapter = this@PlaylistFragment.playlistAdapter
-            layoutManager = LinearLayoutManager(context)
-            setHasFixedSize(true)
-        }
-    }
     companion object{
-        private const val CHECK_PLAYLIST_ERROR = "checkListErrors"
         private const val CHECK_PLAYLISTS_EXISTENCE = "check playlists existence"
         private const val CHECK_PLAYLISTS_RESULT = "playlists"
     }

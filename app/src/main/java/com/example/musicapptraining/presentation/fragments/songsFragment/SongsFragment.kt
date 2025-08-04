@@ -21,10 +21,14 @@ import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFrag
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
+import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.OnOptionSelected
+import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayerEvents
+import com.example.musicapptraining.utilities.SortOptionBottomSheetHandler
 import com.example.musicapptraining.utilities.SortOptions
 import com.example.musicapptraining.utilities.handleUiState
+import com.example.musicapptraining.utilities.setAdapterData
 import com.example.musicapptraining.utilities.sortComparator
 import com.example.musicapptraining.utilities.sortOptionsInBottomSheetBasedOnUserChoice
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,39 +42,42 @@ import kotlin.coroutines.resume
 @AndroidEntryPoint
 class SongsFragment :
     BaseFragment<FragmentSongsBinding>(FragmentSongsBinding::inflate),
-    OnOptionSelected
+    OnOptionSelected,PlayedSongBottomSheetHandler,
+    MoreButtonBottomSheetHandler,SortOptionBottomSheetHandler
 {
     private val songAdapter by lazy { SongAdapter() }
     private val songsViewModel: SongsViewModel by activityViewModels()
     private val playerViewModel: PlaybackViewModel by activityViewModels()
-    private var permissionContinuation: Continuation<Boolean>? = null
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
-
+    private lateinit var songsFragmentClickBinder: SongsFragmentClickBinder
+    private lateinit var permissionRequestForDeviceAudios: PermissionRequestForDeviceAudios
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        checkRequestPermissionLauncher()
+        permissionRequestForDeviceAudios = PermissionRequestForDeviceAudios(
+            requireContext(),this
+        )
+        permissionRequestForDeviceAudios.checkRequestPermissionLauncher()
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //playerViewModel.reconnectIfNeeded()
         super.onViewCreated(view, savedInstanceState)
-        //playerViewModel.setMediaControllerToConnectToMediaSessionService()
-        setAdapterForListOfSongs()
+        setupUI()
         viewLifecycleOwner.lifecycleScope.launch {
-            checkIfPermissionGrantedOrNotToFetchAllAudios()
+            permissionRequestForDeviceAudios.checkIfPermissionGrantedOrNotToFetchAllAudios()
             setViewModelObservers()
         }
-        setAdapterClickListeners()
-        setCLickListeners()
     }
-    private suspend fun checkIfPermissionGrantedOrNotToFetchAllAudios(){
-        if (requestReadExternalStoragePermission()){
-            songsViewModel.fetchAllMusic()
-        }else {
-            Log.i(
-                PERMISSION_TAG,
-                "onViewCreated: not granted permission"
-            )
-        }
+    private fun setupUI(){
+        binding.songsRv.setAdapterData(songAdapter)
+        songsFragmentClickBinder = SongsFragmentClickBinder(
+            playerViewModel,
+            songAdapter,
+            binding,
+            this,
+            this,
+            this,
+            viewLifecycleOwner.lifecycleScope
+        )
+        permissionRequestForDeviceAudios.setSongsViewModel(songsViewModel)
+        songsFragmentClickBinder.setupUIClicks()
     }
     private suspend fun setViewModelObservers(){
         viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
@@ -98,36 +105,6 @@ class SongsFragment :
             }
         }
     }
-    private fun setAdapterClickListeners(){
-        songAdapter.apply {
-            setOnItemClickListener{song->
-                playerViewModel.reconnectIfNeeded()
-                viewLifecycleOwner.lifecycleScope.launch {
-                    delay(300)
-                    playerViewModel.getEvent(
-                        PlayerEvents.GetThePositionOfSpecificSongInsideThePlayList(song.songId)
-                    )
-                    showPlayedSongBottomSheet(song)
-                }
-            }
-            setOnMoreButtonClickListener { song->
-                showMoreButtonBottomSheet(song)
-            }
-        }
-    }
-    private fun setCLickListeners(){
-        binding.apply{
-            playAllTv.setOnClickListener {
-                playerViewModel.getEvent(PlayerEvents.GoToSpecificItem(0))
-            }
-            playAllImg.setOnClickListener {
-                playerViewModel.getEvent(PlayerEvents.GoToSpecificItem(0))
-            }
-            sortOptions.setOnClickListener {
-                showSortOptionBottomSheet(this@SongsFragment)
-            }
-        }
-    }
     override fun onOptionSelected(sortOptions: SortOptions) {
         val comparator  = sortComparator[sortOptions] ?: return
         with(songAdapter){
@@ -139,65 +116,17 @@ class SongsFragment :
             )
         }
     }
-    private fun showSortOptionBottomSheet(onOptionSelected: OnOptionSelected){
-        val bottomSheet = SortOptionBottomSheet.newInstance(onOptionSelected)
-        bottomSheet.show(parentFragmentManager,tag)
-    }
-    private fun showPlayedSongBottomSheet(song: Song){
+    override fun openPlayedSongBottomSheet(song: Song) {
         val bottomSheet = PlayedSongBottomSheet.newInstance(song)
         bottomSheet.show(parentFragmentManager,tag)
     }
-    private fun showMoreButtonBottomSheet(song: Song){
+    override fun openMoreButtonBottomSheet(song: Song) {
         val bottomSheet = MoreButtonBottomSheet.newInstance(song)
         bottomSheet.show(parentFragmentManager,tag)
     }
-    private fun checkRequestPermissionLauncher(){
-        requestPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            if (isGranted) {
-                permissionContinuation?.resume(true)
-            } else {
-                permissionContinuation?.resume(false)
-            }
-            permissionContinuation = null
-        }
-    }
-    private suspend fun requestReadExternalStoragePermission(): Boolean {
-        return suspendCancellableCoroutine { continuation ->
-            val permission = checkDeviceVersionForCorrectPermission()
-            checkAndRequestPermission(permission,continuation)
-
-        }
-    }
-    private fun checkDeviceVersionForCorrectPermission(): String{
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_AUDIO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-    }
-    private fun checkAndRequestPermission(
-        permission: String,
-        continuation: CancellableContinuation<Boolean>
-    ){
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                permission
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            continuation.resume(true)
-        } else {
-            permissionContinuation = continuation
-            requestPermissionLauncher.launch(permission)
-        }
-    }
-    private fun setAdapterForListOfSongs() {
-        binding.songsRv.apply {
-            adapter = this@SongsFragment.songAdapter
-            layoutManager = LinearLayoutManager(context)
-            setHasFixedSize(true)
-        }
+    override fun openSortOptionBottomSheet() {
+        val bottomSheet = SortOptionBottomSheet.newInstance(this)
+        bottomSheet.show(parentFragmentManager,tag)
     }
     companion object{
         const val ERROR_WARNING = "Error warning"

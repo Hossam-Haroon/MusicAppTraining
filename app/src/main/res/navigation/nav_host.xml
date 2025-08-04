@@ -33,13 +33,16 @@
         tools:layout="@layout/fragment_artists_and_albums_and_playlists" >
         <argument
             android:name="artistName"
-            app:argType="string" />
+            app:argType="string"
+            android:defaultValue=""/>
         <argument
             android:name="albumName"
-            app:argType="string" />
+            app:argType="string"
+            android:defaultValue=""/>
         <argument
             android:name="playListName"
-            app:argType="string" />
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
     <fragment
         android:id="@+id/songInfoFragment"
