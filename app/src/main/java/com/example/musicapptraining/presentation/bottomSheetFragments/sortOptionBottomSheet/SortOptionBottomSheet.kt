@@ -11,7 +11,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class SortOptionBottomSheet():
+class SortOptionBottomSheet:
     BaseBottomSheetDialogFragment<SortOptionBottomSheetBinding>(
         SortOptionBottomSheetBinding::inflate
     ){

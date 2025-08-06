@@ -29,7 +29,6 @@ class ArtistFragment : BaseFragment<FragmentArtistBinding>(FragmentArtistBinding
         defaultMediaNavigator = DefaultMediaNavigator(findNavController())
         setArtistAdapterClickListeners(defaultMediaNavigator)
         setViewModelObservers()
-
     }
     private fun setViewModelObservers(){
         viewLifecycleOwner.lifecycleScope.launch {
@@ -64,7 +63,7 @@ class ArtistFragment : BaseFragment<FragmentArtistBinding>(FragmentArtistBinding
         binding.artistsRv.setAdapterData(artistAdapter)
         artistAdapter.setOnItemClickListener {artist->
             defaultMediaNavigator.openSelectedMedia(
-                NavigableMedia.ArtistMedia(artist.artistName)
+                NavigableMedia.ArtistMediaFromHomeFragment(artist.artistName)
             )
         }
     }

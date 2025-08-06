@@ -1,4 +1,4 @@
-package com.example.musicapptraining.player
+package com.example.musicapptraining.data.services
 import android.content.Intent
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer

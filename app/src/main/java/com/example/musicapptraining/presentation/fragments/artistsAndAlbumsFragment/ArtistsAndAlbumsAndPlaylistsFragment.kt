@@ -15,6 +15,7 @@ import com.example.musicapptraining.presentation.fragments.songsFragment.SongAda
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
+import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.SortOptionBottomSheetHandler
 import com.example.musicapptraining.utilities.OnOptionSelected
@@ -32,7 +33,7 @@ class ArtistsAndAlbumsAndPlaylistsFragment :
     OnOptionSelected, PlayedSongBottomSheetHandler,
     MoreButtonBottomSheetHandler, SortOptionBottomSheetHandler
 {
-    private val playerViewModel: PlaybackViewModel by activityViewModels()
+    private val playerViewModel: PlayerViewModel by activityViewModels()
     private val artistAndAlbumViewModel: ArtistAndAlbumViewModel by viewModels()
     private val args: ArtistsAndAlbumsAndPlaylistsFragmentArgs by navArgs()
     private val songAdapter by lazy { SongAdapter() }

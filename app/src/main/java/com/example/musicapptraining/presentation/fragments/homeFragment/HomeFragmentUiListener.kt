@@ -6,6 +6,7 @@ import com.example.musicapptraining.R
 import com.example.musicapptraining.databinding.FragmentHomeBinding
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
+import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 
 class HomeFragmentUiListener(
@@ -19,7 +20,9 @@ class HomeFragmentUiListener(
      fun setCLickListeners(){
         binding.apply {
             tvSongName.setOnClickListener {
-                playedSongBottomSheetHandler.openPlayedSongBottomSheet(playbackViewModel.currentSong.value)
+                playedSongBottomSheetHandler.openPlayedSongBottomSheet(
+                    playbackViewModel.currentSong.value
+                )
             }
             ibMore.setOnClickListener {
                 menuClickHandler.showMenuForMoreOptions(it)

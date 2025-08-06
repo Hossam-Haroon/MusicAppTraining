@@ -1,6 +1,7 @@
 package com.example.musicapptraining.presentation.fragments.homeFragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.net.toUri
 import androidx.fragment.app.activityViewModels
@@ -16,8 +17,11 @@ import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
+import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.utilities.PlayerEvents
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -27,6 +31,21 @@ class HomeFragment :
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private val playerViewModel : PlaybackViewModel by activityViewModels()
     private lateinit var homeFragmentUiListener : HomeFragmentUiListener
+    private var wasPlayingBeforeNavigation = false
+    override fun onPause() {
+        super.onPause()
+        wasPlayingBeforeNavigation = playerViewModel.isPlaying.value
+    }
+    override fun onResume() {
+        super.onResume()
+        if (wasPlayingBeforeNavigation && playerViewModel.isPlaying.value){
+            lifecycleScope.launch {
+                delay(100)
+                playerViewModel.getEvent(PlayerEvents.PausePlay)
+            }
+        }
+        wasPlayingBeforeNavigation = false
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         homeFragmentUiListener = HomeFragmentUiListener(
@@ -39,7 +58,7 @@ class HomeFragment :
         setViewPagerAdapterForFragments()
         setViewModelObservers()
         homeFragmentUiListener.setCLickListeners()
-        playerViewModel.checkServiceConnection()
+        //playerViewModel.checkServiceConnection()
     }
     private fun setViewPagerAdapterForFragments(){
         val fragmentTitles = listOf(SONGS,ARTISTS,PLAYLISTS)

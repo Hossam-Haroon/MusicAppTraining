@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.player.MusicService
+import com.example.musicapptraining.data.services.MusicService
 import com.example.musicapptraining.presentation.mappers.toMediaMetaItem
 import com.example.musicapptraining.presentation.mappers.toSong
 import com.example.musicapptraining.utilities.PlayerEvents
@@ -47,26 +47,21 @@ class PlaybackViewModel @Inject constructor(
     private var _isPlaying = MutableStateFlow(false)
     val isPlaying: MutableStateFlow<Boolean> = _isPlaying
     private var _currentMediaPositionInList = MutableStateFlow(0)
-    val currentMediaPositionInList = _currentMediaPositionInList.asStateFlow()
     private var _currentMediaDurationInMs = MutableStateFlow(0L)
     val currentMediaDurationInMs = _currentMediaDurationInMs.asStateFlow()
     private var _currentMediaProgressInMs = MutableStateFlow(0L)
     val currentMediaProgressInMs = _currentMediaProgressInMs.asStateFlow()
     private var _isBufferingClicked = MutableStateFlow(false)
-    val isBufferingClicked = _isBufferingClicked.asStateFlow()
     private var _isRepeatingClicked = MutableStateFlow(false)
     val isRepeatingClicked = _isRepeatingClicked.asStateFlow()
     private var _isShufflingClicked = MutableStateFlow(false)
     val isShufflingClicked = _isShufflingClicked.asStateFlow()
     private var _currentMediaPosition = MutableStateFlow(0f)
-    val currentMediaPosition = _currentMediaPosition.asStateFlow()
     private var _currentSong = MutableStateFlow(
         Song("","","",
         "",0,"",0,null,"")
     )
     val currentSong = _currentSong.asStateFlow()
-    private var _isSongLiked = MutableStateFlow(false)
-    val isSongLiked = _isSongLiked.asStateFlow()
     init {
         initializeService()
     }
@@ -230,8 +225,8 @@ class PlaybackViewModel @Inject constructor(
     private fun setRequiredReason(reason:Int, newPosition:Player.PositionInfo){
         when(reason){
             Player.DISCONTINUITY_REASON_SEEK -> {
-                mediaController?.seekTo(newPosition.positionMs)
                 updatePlayerProgress(newPosition.positionMs)
+                //mediaController?.play()
             }
             Player.DISCONTINUITY_REASON_AUTO_TRANSITION -> Unit
             Player.DISCONTINUITY_REASON_SKIP -> Unit

@@ -65,7 +65,7 @@ class PlaylistFragment : BaseFragment<FragmentPlaylistBinding>(
         playlistAdapter.apply {
             setOnItemClickListener { playList ->
                 defaultMediaNavigator.openSelectedMedia(
-                    NavigableMedia.PlaylistMedia(playList.playlistName)
+                    NavigableMedia.PlaylistMediaFromHomeFragment(playList.playlistName)
                 )
             }
             setOnNewPlaListClickListener {

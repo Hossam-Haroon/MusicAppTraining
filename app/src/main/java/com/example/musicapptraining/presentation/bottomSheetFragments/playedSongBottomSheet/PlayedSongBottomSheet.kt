@@ -24,6 +24,7 @@ import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottom
 import com.example.musicapptraining.presentation.bottomSheetFragments.allSongsBottomSheet.AllSongsBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.fragments.playlistFragment.PlaylistViewModel
+import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.formatDuration
 import com.example.musicapptraining.utilities.getParcelableCompat
@@ -134,6 +135,7 @@ class PlayedSongBottomSheet:
     private suspend fun setCurrentSongObserver(){
         playerViewModel.currentSong.collect{ currentSong->
             Log.d(CHECK_CURRENT_SONG,"$currentSong")
+            Log.d("STATE_FLOW", "current song to: ${currentSong.songName}")
             setSongDetailsAfterCollectingCurrentSong(currentSong)
 
         }
