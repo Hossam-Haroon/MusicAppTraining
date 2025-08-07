@@ -46,19 +46,19 @@ class PlayerControllerViewModel @Inject constructor(
 ):ViewModel() {
     val playbackState = mediaRepository.observePlaybackState().stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = PlaybackState()
         )
     val playbackProgress = mediaRepository.observePlaybackProgress()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = PlaybackProgress()
         )
     val currentSong = mediaRepository.observeCurrentSong()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = Song(
                 "","","","",0,"",
                 0,null,""

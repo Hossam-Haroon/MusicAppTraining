@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.musicapptraining.R
 import com.example.musicapptraining.databinding.FragmentPlayedSongBottomSheetBinding
+import com.example.musicapptraining.domain.model.PlaybackState
 import com.example.musicapptraining.domain.model.Playlist
 import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
@@ -50,7 +51,7 @@ class PlayedSongBottomSheet:
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpViewModelObserving()
-        setUpUi()
+        setupUi(playerViewModel.playbackState.value)
         setUpClickListeners()
     }
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -69,27 +70,13 @@ class PlayedSongBottomSheet:
     private fun setUpViewModelObserving(){
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    getLikedPlayListObserver()
-                }
-                launch {
-                    setCurrentSongObserver()
-                }
-                launch {
-                    setIsPausePlayClickedObserver()
-                }
-                launch {
-                    setMediaProgressionInMinutesObserver()
-                }
-                launch {
-                    setMediaDurationInMsObserver()
-                }
-                launch {
-                    addSongToPlaylistUiStateObserver()
-                }
-                launch {
-                    removeSongFromPlaylistObserver()
-                }
+                launch { getLikedPlayListObserver() }
+                launch { setCurrentSongObserver() }
+                launch { setIsPausePlayClickedObserver() }
+                launch { setMediaProgressionInMinutesObserver() }
+                launch { setMediaDurationInMsObserver() }
+                launch { addSongToPlaylistUiStateObserver() }
+                launch { removeSongFromPlaylistObserver() }
             }
         }
     }
@@ -284,13 +271,13 @@ class PlayedSongBottomSheet:
     private fun showAllSongsBottomSheet(){
         AllSongsBottomSheet().show(parentFragmentManager,tag)
     }
-    private fun setUpUi(){
+    private fun setupUi(state:PlaybackState){
         binding.apply {
             when{
-                playerViewModel.playbackState.value.isShufflingClicked ->{
+                state.isShufflingClicked ->{
                     playedModeImage.setImageResource(R.drawable.shuffle)
                 }
-                playerViewModel.playbackState.value.isRepeatingClicked ->{
+                state.isRepeatingClicked ->{
                     playedModeImage.setImageResource(R.drawable.loop_1)
                 }
                 else ->{
@@ -300,25 +287,31 @@ class PlayedSongBottomSheet:
         }
     }
     private fun setPlayedModeState() {
+        val currentState = playerViewModel.playbackState.value
+        Log.d(
+            "BEFORE_CLICK",
+            "shuffle: ${currentState.isShufflingClicked}, repeat: ${currentState.isRepeatingClicked}"
+        )
         when {
-            playerViewModel.playbackState.value.isShufflingClicked -> {
-                Log.d("checkMode","shuffle:${playerViewModel.playbackState.value.isShufflingClicked}")
+            currentState.isShufflingClicked -> {
+                Log.d("CLICK_ACTION", "Shuffle is true, calling shuffle and repeat events")
                 playerViewModel.getEvent(PlayerEvents.Shuffle)
                 playerViewModel.getEvent(PlayerEvents.Repeat)
                 binding.playedModeImage.setImageResource(R.drawable.loop_1)
             }
-            playerViewModel.playbackState.value.isRepeatingClicked -> {
-                Log.d("checkMode","repeat:${playerViewModel.playbackState.value.isRepeatingClicked}")
+            currentState.isRepeatingClicked -> {
+                Log.d("CLICK_ACTION", "Repeat is true, calling repeat event")
                 playerViewModel.getEvent(PlayerEvents.Repeat)
                 binding.playedModeImage.setImageResource(R.drawable.loop_list)
             }
             else -> {
-                Log.d("checkMode1","shuffle:${playerViewModel.playbackState.value.isShufflingClicked}")
-                Log.d("checkMode","repeat:${playerViewModel.playbackState.value.isRepeatingClicked}")
+                Log.d("CLICK_ACTION", "Both false, calling shuffle event")
                 playerViewModel.getEvent(PlayerEvents.Shuffle)
                 binding.playedModeImage.setImageResource(R.drawable.shuffle)
             }
         }
+        val afterState = playerViewModel.playbackState.value
+        Log.d("AFTER_CLICK", "shuffle: ${afterState.isShufflingClicked}, repeat: ${afterState.isRepeatingClicked}")
     }
     private fun showMoreButtonBottomSheet(){
         val moreButtonBottomSheet = MoreButtonBottomSheet.newInstance(song)
