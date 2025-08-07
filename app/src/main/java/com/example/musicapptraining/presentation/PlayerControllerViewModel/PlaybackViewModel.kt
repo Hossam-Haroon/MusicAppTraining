@@ -1,4 +1,4 @@
-package com.example.musicapptraining.presentation.musicPlayer
+package com.example.musicapptraining.presentation.PlayerControllerViewModel
 
 
 import android.content.ComponentName

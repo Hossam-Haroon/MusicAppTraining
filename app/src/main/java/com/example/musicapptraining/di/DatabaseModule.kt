@@ -22,7 +22,7 @@ object DatabaseModule {
        return  Room.databaseBuilder(
            context,
            MusicDatabase::class.java,
-           "MusicDatabase")
+           MUSIC_DATABASE)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -31,4 +31,7 @@ object DatabaseModule {
     fun provideDao(musicDatabase: MusicDatabase): MusicDao{
         return musicDatabase.musicDao()
     }
+
+
+    private const val MUSIC_DATABASE = "MusicDatabase"
 }

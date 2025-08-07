@@ -1,7 +1,6 @@
 package com.example.musicapptraining.presentation.fragments.homeFragment
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.core.net.toUri
 import androidx.fragment.app.activityViewModels
@@ -14,10 +13,9 @@ import com.example.musicapptraining.presentation.ViewPagerAdapter
 import com.example.musicapptraining.databinding.FragmentHomeBinding
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,16 +27,16 @@ class HomeFragment :
     BaseFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate),
     PlayedSongBottomSheetHandler {
     private lateinit var viewPagerAdapter: ViewPagerAdapter
-    private val playerViewModel : PlaybackViewModel by activityViewModels()
+    private val playerViewModel : PlayerControllerViewModel by activityViewModels()
     private lateinit var homeFragmentUiListener : HomeFragmentUiListener
     private var wasPlayingBeforeNavigation = false
     override fun onPause() {
         super.onPause()
-        wasPlayingBeforeNavigation = playerViewModel.isPlaying.value
+        wasPlayingBeforeNavigation = playerViewModel.playbackState.value.isPlaying
     }
     override fun onResume() {
         super.onResume()
-        if (wasPlayingBeforeNavigation && playerViewModel.isPlaying.value){
+        if (wasPlayingBeforeNavigation && playerViewModel.playbackState.value.isPlaying){
             lifecycleScope.launch {
                 delay(100)
                 playerViewModel.getEvent(PlayerEvents.PausePlay)
@@ -93,8 +91,8 @@ class HomeFragment :
         }
     }
     private suspend fun setIsPausePlayClickedObserver(){
-        playerViewModel.isPlaying.collect{state->
-            setCorrectImageBasedOnIsPausePlayClickedValue(state)
+        playerViewModel.playbackState.collect{state->
+            setCorrectImageBasedOnIsPausePlayClickedValue(state.isPlaying)
         }
     }
     private fun setCorrectImageBasedOnIsPausePlayClickedValue(state:Boolean){

@@ -2,12 +2,26 @@ package com.example.musicapptraining.di
 
 import com.example.musicapptraining.domain.repositories.AlbumRepository
 import com.example.musicapptraining.domain.repositories.ArtistRepository
+import com.example.musicapptraining.domain.repositories.MediaRepository
 import com.example.musicapptraining.domain.repositories.PlaylistRepository
 import com.example.musicapptraining.domain.repositories.SongRepository
 import com.example.musicapptraining.domain.usecases.albumUseCases.GetAllAlbumsUseCase
 import com.example.musicapptraining.domain.usecases.albumUseCases.SearchAlbumByNameUseCase
 import com.example.musicapptraining.domain.usecases.artistUseCases.GetAllArtistsUseCase
 import com.example.musicapptraining.domain.usecases.artistUseCases.SearchArtistByNameUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.AddPlaylistToPlayerUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ClearPlayerUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.GetPositionOfSongInsidePlaylistUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekBackwardUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekForwardUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekToNextTrackUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekToPositionUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekToPreviousTrackUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekToTrackUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SetSongToPlayNextUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.TogglePlaybackUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ToggleRepeatUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ToggleShuffleUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.AddNewPlaylistUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.AddSongToPlaylistUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.DeleteSongFromPlaylistUseCase
@@ -23,7 +37,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 
 
 @Module
@@ -90,5 +103,61 @@ object UseCasesModule {
         playlistRepository: PlaylistRepository
     ):DeleteSongFromPlaylistUseCase{
         return DeleteSongFromPlaylistUseCase(playlistRepository)
+    }
+    @Provides
+    fun togglePlayback(
+        mediaRepository: MediaRepository
+    ):TogglePlaybackUseCase{
+        return TogglePlaybackUseCase(mediaRepository)
+    }
+    @Provides
+    fun seekToItem(mediaRepository: MediaRepository):SeekToTrackUseCase{
+        return SeekToTrackUseCase(mediaRepository)
+    }
+    @Provides
+    fun seekForward(mediaRepository: MediaRepository):SeekForwardUseCase{
+        return SeekForwardUseCase(mediaRepository)
+    }
+    @Provides
+    fun seekBackward(mediaRepository: MediaRepository):SeekBackwardUseCase{
+        return SeekBackwardUseCase(mediaRepository)
+    }
+    @Provides
+    fun addPlaylist(mediaRepository: MediaRepository):AddPlaylistToPlayerUseCase{
+        return AddPlaylistToPlayerUseCase(mediaRepository)
+    }
+    @Provides
+    fun clearPlayer(mediaRepository: MediaRepository):ClearPlayerUseCase{
+        return ClearPlayerUseCase(mediaRepository)
+    }
+    @Provides
+    fun seekToNextTrack(mediaRepository: MediaRepository):SeekToNextTrackUseCase{
+        return SeekToNextTrackUseCase(mediaRepository)
+    }
+    @Provides
+    fun seekToPreviousTrack(mediaRepository: MediaRepository):SeekToPreviousTrackUseCase{
+        return SeekToPreviousTrackUseCase(mediaRepository)
+    }
+    @Provides
+    fun seekToPosition(mediaRepository: MediaRepository):SeekToPositionUseCase{
+        return SeekToPositionUseCase(mediaRepository)
+    }
+    @Provides
+    fun setSongToPlayNext(mediaRepository: MediaRepository):SetSongToPlayNextUseCase{
+        return SetSongToPlayNextUseCase(mediaRepository)
+    }
+    @Provides
+    fun toggleRepeat(mediaRepository: MediaRepository):ToggleRepeatUseCase{
+        return ToggleRepeatUseCase(mediaRepository)
+    }
+    @Provides
+    fun toggleShuffle(mediaRepository: MediaRepository):ToggleShuffleUseCase{
+        return ToggleShuffleUseCase(mediaRepository)
+    }
+    @Provides
+    fun getPositionOfSongInsidePlaylist(
+        mediaRepository: MediaRepository
+    ):GetPositionOfSongInsidePlaylistUseCase{
+        return GetPositionOfSongInsidePlaylistUseCase(mediaRepository)
     }
 }

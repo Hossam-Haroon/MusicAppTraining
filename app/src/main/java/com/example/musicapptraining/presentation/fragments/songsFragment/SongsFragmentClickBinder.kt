@@ -2,8 +2,7 @@ package com.example.musicapptraining.presentation.fragments.songsFragment
 
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.example.musicapptraining.databinding.FragmentSongsBinding
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayerEvents
@@ -12,7 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SongsFragmentClickBinder(
-    private val playerViewModel:PlaybackViewModel,
+    private val playerViewModel:PlayerControllerViewModel,
     private val songAdapter: SongAdapter,
     private val binding: FragmentSongsBinding,
     private val showPlayedSongBottomSheetHandler: PlayedSongBottomSheetHandler,
@@ -27,7 +26,7 @@ class SongsFragmentClickBinder(
     private fun setAdapterClickListeners(){
         songAdapter.apply {
             setOnItemClickListener{song->
-                playerViewModel.reconnectIfNeeded()
+                playerViewModel.reconnectIfNeededUseCase()
                 viewLifecycleCoroutineScope.launch {
                     delay(300)
                     playerViewModel.getEvent(

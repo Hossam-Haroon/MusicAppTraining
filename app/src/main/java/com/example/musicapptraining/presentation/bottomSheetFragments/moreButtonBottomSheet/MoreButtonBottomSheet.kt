@@ -9,11 +9,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.musicapptraining.databinding.FragmentMoreButtonBottomSheetBinding
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.addToPlayListBottomSheet.AddToPlayListBottomSheetFragment
 import com.example.musicapptraining.presentation.fragments.homeFragment.HomeFragmentDirections
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.getParcelableCompat
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,7 +23,7 @@ class MoreButtonBottomSheet :
     BaseBottomSheetDialogFragment<FragmentMoreButtonBottomSheetBinding>(
         FragmentMoreButtonBottomSheetBinding::inflate
     ) {
-    private val playerViewModel : PlayerViewModel by activityViewModels()
+    private val playerViewModel : PlayerControllerViewModel by activityViewModels()
     private lateinit var  song: Song
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -5,23 +5,17 @@ import android.view.View
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.musicapptraining.databinding.FragmentSearchMoreButtonBinding
-import com.example.musicapptraining.domain.model.Album
-import com.example.musicapptraining.domain.model.Artist
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.fragments.albumFragment.AlbumAdapter
 import com.example.musicapptraining.presentation.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
-import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.setAdapterData
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -33,7 +27,7 @@ class SearchMoreButtonFragment : BaseFragment<FragmentSearchMoreButtonBinding>(
     private val artistAdapter by lazy { ArtistAdapter() }
     private val albumAdapter by lazy { AlbumAdapter() }
     private val navArgs: SearchMoreButtonFragmentArgs by navArgs()
-    private val playerViewModel : PlayerViewModel by activityViewModels()
+    private val playerViewModel : PlayerControllerViewModel by activityViewModels()
     private lateinit var searchMoreButtonAdaptersClickHandler: SearchMoreButtonAdaptersClickHandler
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -76,6 +76,9 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:2.6.1")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
+    //LifeCycleObserver
+    implementation ("androidx.lifecycle:lifecycle-process:2.9.2")
+    implementation ("androidx.lifecycle:lifecycle-common:2.9.2")
 
     //hilt
     implementation ("com.google.dagger:hilt-android:2.51.1")

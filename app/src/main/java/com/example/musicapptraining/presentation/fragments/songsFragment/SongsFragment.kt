@@ -1,27 +1,19 @@
 package com.example.musicapptraining.presentation.fragments.songsFragment
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicapptraining.databinding.FragmentSongsBinding
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.sortOptionBottomSheet.SortOptionBottomSheet
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.OnOptionSelected
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
@@ -33,12 +25,7 @@ import com.example.musicapptraining.utilities.setAdapterData
 import com.example.musicapptraining.utilities.sortComparator
 import com.example.musicapptraining.utilities.sortOptionsInBottomSheetBasedOnUserChoice
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
 
 @AndroidEntryPoint
 class SongsFragment :
@@ -48,7 +35,7 @@ class SongsFragment :
 {
     private val songAdapter by lazy { SongAdapter() }
     private val songsViewModel: SongsViewModel by activityViewModels()
-    private val playerViewModel: PlaybackViewModel by activityViewModels()
+    private val playerViewModel: PlayerControllerViewModel by activityViewModels()
     private lateinit var songsFragmentClickBinder: SongsFragmentClickBinder
     private lateinit var permissionRequestForDeviceAudios: PermissionRequestForDeviceAudios
     override fun onCreate(savedInstanceState: Bundle?) {

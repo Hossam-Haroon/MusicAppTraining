@@ -19,12 +19,11 @@ import com.example.musicapptraining.R
 import com.example.musicapptraining.databinding.FragmentPlayedSongBottomSheetBinding
 import com.example.musicapptraining.domain.model.Playlist
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.allSongsBottomSheet.AllSongsBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.fragments.playlistFragment.PlaylistViewModel
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.formatDuration
 import com.example.musicapptraining.utilities.getParcelableCompat
@@ -38,7 +37,7 @@ class PlayedSongBottomSheet:
     BaseBottomSheetDialogFragment<FragmentPlayedSongBottomSheetBinding>(
         FragmentPlayedSongBottomSheetBinding::inflate
     ) {
-    private val playerViewModel : PlaybackViewModel by activityViewModels()
+    private val playerViewModel : PlayerControllerViewModel by activityViewModels()
     private val playlistViewModel : PlaylistViewModel by activityViewModels()
     private var isSongLiked : Boolean = false
     private lateinit var song: Song
@@ -109,20 +108,25 @@ class PlayedSongBottomSheet:
         }
     }
     private suspend fun setMediaProgressionInMinutesObserver(){
-        playerViewModel.currentMediaProgressInMs.collect{progressInMs->
-            binding.currentSongProgressTv.text = formatDuration(progressInMs)
-            binding.musicProgressSeekbar.progress = progressInMs.toInt()
+        playerViewModel.playbackProgress.collect{playbackProgress->
+            binding.currentSongProgressTv.text = formatDuration(
+                playbackProgress.currentMediaProgressInMs
+            )
+            binding.musicProgressSeekbar.progress =
+                playbackProgress.currentMediaProgressInMs.toInt()
         }
     }
     private suspend fun setMediaDurationInMsObserver(){
-        playerViewModel.currentMediaDurationInMs.collect{duration->
-            binding.fullSongLengthTv.text = formatDuration(duration)
-            binding.musicProgressSeekbar.max = duration.toInt()
+        playerViewModel.playbackProgress.collect{playbackProgress->
+            binding.fullSongLengthTv.text = formatDuration(
+                playbackProgress.currentMediaDurationInMs
+            )
+            binding.musicProgressSeekbar.max = playbackProgress.currentMediaDurationInMs.toInt()
         }
     }
     private suspend fun setIsPausePlayClickedObserver(){
-        playerViewModel.isPlaying.collect{state->
-            setCorrectImageBasedOnIsPausePlayClickedValue(state)
+        playerViewModel.playbackState.collect{state->
+            setCorrectImageBasedOnIsPausePlayClickedValue(state.isPlaying)
         }
     }
     private fun setCorrectImageBasedOnIsPausePlayClickedValue(state:Boolean){
@@ -181,16 +185,16 @@ class PlayedSongBottomSheet:
             Log.d(
                 SEEK_DURATION,
                 formatDuration(
-                    playerViewModel.currentMediaDurationInMs.value
+                    playerViewModel.playbackProgress.value.currentMediaDurationInMs
                 )
             )
             currentSongProgressTv.text =
                 formatDuration(
-                    playerViewModel.currentMediaProgressInMs.value
+                    playerViewModel.playbackProgress.value.currentMediaProgressInMs
                 )
             fullSongLengthTv.text =
                 formatDuration(
-                    playerViewModel.currentMediaDurationInMs.value
+                    playerViewModel.playbackProgress.value.currentMediaDurationInMs
                 )
             try {
                 imageView3.setImageURI(
@@ -205,9 +209,9 @@ class PlayedSongBottomSheet:
                 )
             }
             musicProgressSeekbar.progress =
-                playerViewModel.currentMediaProgressInMs.value.toInt()
+                playerViewModel.playbackProgress.value.currentMediaProgressInMs.toInt()
             musicProgressSeekbar.max =
-                playerViewModel.currentMediaDurationInMs.value.toInt()
+                playerViewModel.playbackProgress.value.currentMediaDurationInMs.toInt()
         }
     }
     private fun setUpClickListeners() {
@@ -283,10 +287,10 @@ class PlayedSongBottomSheet:
     private fun setUpUi(){
         binding.apply {
             when{
-                playerViewModel.isShufflingClicked.value ->{
+                playerViewModel.playbackState.value.isShufflingClicked ->{
                     playedModeImage.setImageResource(R.drawable.shuffle)
                 }
-                playerViewModel.isRepeatingClicked.value ->{
+                playerViewModel.playbackState.value.isRepeatingClicked ->{
                     playedModeImage.setImageResource(R.drawable.loop_1)
                 }
                 else ->{
@@ -297,12 +301,12 @@ class PlayedSongBottomSheet:
     }
     private fun setPlayedModeState() {
         when {
-            playerViewModel.isShufflingClicked.value -> {
+            playerViewModel.playbackState.value.isShufflingClicked -> {
                 playerViewModel.getEvent(PlayerEvents.Shuffle)
                 playerViewModel.getEvent(PlayerEvents.Repeat)
                 binding.playedModeImage.setImageResource(R.drawable.loop_1)
             }
-            playerViewModel.isRepeatingClicked.value -> {
+            playerViewModel.playbackState.value.isRepeatingClicked -> {
                 playerViewModel.getEvent(PlayerEvents.Repeat)
                 binding.playedModeImage.setImageResource(R.drawable.loop_list)
             }

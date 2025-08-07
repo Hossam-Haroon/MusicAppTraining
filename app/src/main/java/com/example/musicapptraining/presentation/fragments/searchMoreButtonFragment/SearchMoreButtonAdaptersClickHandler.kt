@@ -3,8 +3,7 @@ package com.example.musicapptraining.presentation.fragments.searchMoreButtonFrag
 import androidx.navigation.NavController
 import com.example.musicapptraining.presentation.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.presentation.navigation.DefaultMediaNavigator
 import com.example.musicapptraining.presentation.navigation.NavigableMedia
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
@@ -14,7 +13,7 @@ import com.example.musicapptraining.utilities.PlayerEvents
 class SearchMoreButtonAdaptersClickHandler(
     private val songAdapter: SongAdapter,
     private val artistAdapter: ArtistAdapter,
-    private val playerViewModel : PlayerViewModel,
+    private val playerViewModel : PlayerControllerViewModel,
     navController: NavController,
     private val playedSongBottomSheetHandler: PlayedSongBottomSheetHandler,
     private val moreButtonBottomSheetHandler: MoreButtonBottomSheetHandler

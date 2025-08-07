@@ -13,13 +13,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.R
 import com.example.musicapptraining.databinding.FragmentAllSongsBottomSheetBinding
 import com.example.musicapptraining.domain.model.Song
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
 import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongsViewModel
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.handleUiState
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -32,7 +31,7 @@ class AllSongsBottomSheet :
     BaseBottomSheetDialogFragment<FragmentAllSongsBottomSheetBinding>(
         FragmentAllSongsBottomSheetBinding::inflate
     ) {
-    private val playerViewModel : PlayerViewModel by activityViewModels()
+    private val playerViewModel : PlayerControllerViewModel by activityViewModels()
     private val songViewModel : SongsViewModel by activityViewModels()
     private val songAdapter by lazy { SongAdapter() }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

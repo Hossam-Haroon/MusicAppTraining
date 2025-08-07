@@ -7,8 +7,7 @@ import androidx.navigation.NavController
 import com.example.musicapptraining.databinding.FragmentSearchBinding
 import com.example.musicapptraining.presentation.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayerEvents
@@ -17,7 +16,7 @@ class SearchFragmentClickBinder(
     private val binding: FragmentSearchBinding,
     private val songAdapter:SongAdapter,
     private val artistAdapter: ArtistAdapter,
-    private val playerViewModel: PlayerViewModel,
+    private val playerViewModel: PlayerControllerViewModel,
     private val navController: NavController,
     private val searchViewModel: SearchViewModel,
     private val showPlayedSongBottomSheetHandler: PlayedSongBottomSheetHandler,

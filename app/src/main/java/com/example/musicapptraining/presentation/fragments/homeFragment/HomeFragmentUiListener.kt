@@ -5,14 +5,13 @@ import androidx.navigation.NavController
 import com.example.musicapptraining.R
 import com.example.musicapptraining.databinding.FragmentHomeBinding
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
-import com.example.musicapptraining.presentation.musicPlayer.PlaybackViewModel
-import com.example.musicapptraining.presentation.musicPlayer.PlayerViewModel
+import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 
 class HomeFragmentUiListener(
     private val binding: FragmentHomeBinding,
     private val navController: NavController,
-    private val playbackViewModel: PlaybackViewModel,
+    private val playerControllerViewModel: PlayerControllerViewModel,
     private val playedSongBottomSheetHandler: PlayedSongBottomSheetHandler,
     context: Context
 ) {
@@ -21,7 +20,8 @@ class HomeFragmentUiListener(
         binding.apply {
             tvSongName.setOnClickListener {
                 playedSongBottomSheetHandler.openPlayedSongBottomSheet(
-                    playbackViewModel.currentSong.value
+                    playerControllerViewModel.currentSong.value
+
                 )
             }
             ibMore.setOnClickListener {
@@ -31,10 +31,10 @@ class HomeFragmentUiListener(
                 navController.navigate(R.id.action_homeFragment_to_searchFragment)
             }
             ivNextSong.setOnClickListener {
-                playbackViewModel.getEvent(PlayerEvents.Next)
+                playerControllerViewModel.getEvent(PlayerEvents.Next)
             }
             ivPlayPause.setOnClickListener {
-                playbackViewModel.getEvent(PlayerEvents.PausePlay)
+                playerControllerViewModel.getEvent(PlayerEvents.PausePlay)
             }
         }
     }
