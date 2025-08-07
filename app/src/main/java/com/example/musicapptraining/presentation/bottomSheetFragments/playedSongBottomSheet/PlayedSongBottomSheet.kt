@@ -302,15 +302,19 @@ class PlayedSongBottomSheet:
     private fun setPlayedModeState() {
         when {
             playerViewModel.playbackState.value.isShufflingClicked -> {
+                Log.d("checkMode","shuffle:${playerViewModel.playbackState.value.isShufflingClicked}")
                 playerViewModel.getEvent(PlayerEvents.Shuffle)
                 playerViewModel.getEvent(PlayerEvents.Repeat)
                 binding.playedModeImage.setImageResource(R.drawable.loop_1)
             }
             playerViewModel.playbackState.value.isRepeatingClicked -> {
+                Log.d("checkMode","repeat:${playerViewModel.playbackState.value.isRepeatingClicked}")
                 playerViewModel.getEvent(PlayerEvents.Repeat)
                 binding.playedModeImage.setImageResource(R.drawable.loop_list)
             }
             else -> {
+                Log.d("checkMode1","shuffle:${playerViewModel.playbackState.value.isShufflingClicked}")
+                Log.d("checkMode","repeat:${playerViewModel.playbackState.value.isRepeatingClicked}")
                 playerViewModel.getEvent(PlayerEvents.Shuffle)
                 binding.playedModeImage.setImageResource(R.drawable.shuffle)
             }

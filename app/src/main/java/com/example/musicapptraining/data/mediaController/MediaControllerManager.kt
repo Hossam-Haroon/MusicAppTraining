@@ -154,10 +154,14 @@ class MediaControllerManager @Inject constructor(
             true ->{
                 _playbackState.value = _playbackState.value.copy(isShufflingClicked = false)
                 mediaController?.shuffleModeEnabled = _playbackState.value.isShufflingClicked
+                Log.d("checkModeMediaController","shuffle:${playbackState.value.isShufflingClicked}")
+                Log.d("checkModeMediaController","mediaController shuffle:${mediaController?.shuffleModeEnabled}")
             }
             else ->{
                 _playbackState.value = _playbackState.value.copy(isShufflingClicked = true)
                 mediaController?.shuffleModeEnabled = _playbackState.value.isShufflingClicked
+                Log.d("checkModeMediaController","shuffle:${playbackState.value.isShufflingClicked}")
+                Log.d("checkModeMediaController","mediaController shuffle:${mediaController?.shuffleModeEnabled}")
             }
         }
     }
@@ -166,10 +170,12 @@ class MediaControllerManager @Inject constructor(
             true -> {
                 _playbackState.value = _playbackState.value.copy(isRepeatingClicked = false)
                 mediaController?.repeatMode = Player.REPEAT_MODE_OFF
+                Log.d("checkMode","repeat:${playbackState.value.isRepeatingClicked}")
             }
             else->{
                 _playbackState.value = _playbackState.value.copy(isRepeatingClicked = true)
                 mediaController?.repeatMode = Player.REPEAT_MODE_ONE
+                Log.d("checkMode","repeat:${playbackState.value.isRepeatingClicked}")
             }
         }
     }
