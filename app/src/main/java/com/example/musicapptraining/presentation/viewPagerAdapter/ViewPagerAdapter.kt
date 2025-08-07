@@ -1,4 +1,4 @@
-package com.example.musicapptraining.presentation
+package com.example.musicapptraining.presentation.viewPagerAdapter
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter

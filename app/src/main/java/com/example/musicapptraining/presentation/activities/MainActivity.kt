@@ -1,4 +1,4 @@
-package com.example.musicapptraining.presentation
+package com.example.musicapptraining.presentation.activities
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

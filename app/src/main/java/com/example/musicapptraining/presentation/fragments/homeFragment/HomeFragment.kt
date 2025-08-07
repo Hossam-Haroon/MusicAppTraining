@@ -9,7 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.musicapptraining.R
-import com.example.musicapptraining.presentation.ViewPagerAdapter
+import com.example.musicapptraining.presentation.viewPagerAdapter.ViewPagerAdapter
 import com.example.musicapptraining.databinding.FragmentHomeBinding
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.domain.model.Song
