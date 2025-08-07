@@ -317,9 +317,7 @@ class PlayedSongBottomSheet:
         }
     }
     private fun showMoreButtonBottomSheet(){
-        val moreButtonBottomSheet = MoreButtonBottomSheet.newInstance(
-            song
-        )
+        val moreButtonBottomSheet = MoreButtonBottomSheet.newInstance(song)
         moreButtonBottomSheet.show(parentFragmentManager,tag)
     }
     private fun goToSpecificPositionInSong(fromUser : Boolean, position:Int){
