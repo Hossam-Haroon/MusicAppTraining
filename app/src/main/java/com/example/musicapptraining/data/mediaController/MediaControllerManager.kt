@@ -46,7 +46,7 @@ class MediaControllerManager @Inject constructor(
     private val maxRetryCount = 3
     private var _playbackState = MutableStateFlow(PlaybackState())
     val playbackState = _playbackState.asStateFlow()
-    private var _playbackProgress = MutableStateFlow(PlaybackProgress())
+    private val _playbackProgress = MutableStateFlow(PlaybackProgress())
     val playbackProgress = _playbackProgress.asStateFlow()
     private var _currentSong = MutableStateFlow(
         Song("","","",
@@ -60,6 +60,31 @@ class MediaControllerManager @Inject constructor(
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
         clearJobs()
+    }
+    fun cycleShuffleRepeat() {
+        val s = _playbackState.value
+        Log.d("PLAYER_MGR","🔁 Before cycle: shuffle=${s.isShufflingClicked}, repeat=${s.isRepeatingClicked}")
+        when {
+            !s.isShufflingClicked && !s.isRepeatingClicked -> {
+                // OFF → SHUFFLE
+                mediaController?.shuffleModeEnabled = true
+                _playbackState.value = s.copy(isShufflingClicked = true)
+            }
+            s.isShufflingClicked -> {
+                // SHUFFLE → REPEAT_ONE
+                mediaController?.shuffleModeEnabled = false
+                mediaController?.repeatMode      = Player.REPEAT_MODE_ONE
+                _playbackState.value = s.copy(isShufflingClicked = false,
+                    isRepeatingClicked = true)
+            }
+            else /* isRepeatingClicked */ -> {
+                // REPEAT_ONE → OFF
+                mediaController?.repeatMode = Player.REPEAT_MODE_OFF
+                _playbackState.value = s.copy(isRepeatingClicked = false)
+            }
+        }
+        val after = _playbackState.value
+        Log.d("PLAYER_MGR","✅ After cycle: shuffle=${after.isShufflingClicked}, repeat=${after.isRepeatingClicked}")
     }
     private fun initializeService() {
         val intent = Intent(applicationContext, MusicService::class.java)

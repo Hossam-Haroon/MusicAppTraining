@@ -19,5 +19,6 @@ sealed class PlayerEvents {
     object SeekForward: PlayerEvents()
     object SeekBackward: PlayerEvents()
     object ClearMediaItems: PlayerEvents()
+    object CycleShuffleRepeat: PlayerEvents()
 
 }

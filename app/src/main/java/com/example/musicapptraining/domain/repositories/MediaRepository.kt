@@ -23,4 +23,5 @@ interface MediaRepository {
     fun observePlaybackState(): Flow<PlaybackState>
     fun observePlaybackProgress(): Flow<PlaybackProgress>
     fun observeCurrentSong(): Flow<Song>
+    fun cycleShuffleRepeat()
 }

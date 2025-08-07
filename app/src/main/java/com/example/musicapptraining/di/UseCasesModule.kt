@@ -11,6 +11,7 @@ import com.example.musicapptraining.domain.usecases.artistUseCases.GetAllArtists
 import com.example.musicapptraining.domain.usecases.artistUseCases.SearchArtistByNameUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.AddPlaylistToPlayerUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ClearPlayerUseCase
+import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.CycleShuffleRepeatUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.GetPositionOfSongInsidePlaylistUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekBackwardUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekForwardUseCase
@@ -159,5 +160,9 @@ object UseCasesModule {
         mediaRepository: MediaRepository
     ):GetPositionOfSongInsidePlaylistUseCase{
         return GetPositionOfSongInsidePlaylistUseCase(mediaRepository)
+    }
+    @Provides
+    fun cycleShuffleRepeat(mediaRepository: MediaRepository):CycleShuffleRepeatUseCase{
+        return CycleShuffleRepeatUseCase(mediaRepository)
     }
 }

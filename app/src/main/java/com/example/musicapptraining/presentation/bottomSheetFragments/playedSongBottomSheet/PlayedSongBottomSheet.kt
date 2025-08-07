@@ -51,7 +51,7 @@ class PlayedSongBottomSheet:
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpViewModelObserving()
-        setupUi(playerViewModel.playbackState.value)
+        //setupUi(playerViewModel.playbackState.value)
         setUpClickListeners()
     }
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -77,7 +77,19 @@ class PlayedSongBottomSheet:
                 launch { setMediaDurationInMsObserver() }
                 launch { addSongToPlaylistUiStateObserver() }
                 launch { removeSongFromPlaylistObserver() }
+                launch { observePlayerState() }
             }
+        }
+    }
+    private suspend fun observePlayerState() {
+        playerViewModel.playbackState.collect { state ->
+            Log.d("PLAYBACK_STATE", "cycleClicked? shuffle=${state.isShufflingClicked} repeat=${state.isRepeatingClicked}")
+            val icon = when {
+                state.isRepeatingClicked -> R.drawable.loop_1
+                state.isShufflingClicked  -> R.drawable.shuffle
+                else  -> R.drawable.loop_list
+            }
+            binding.playedModeImage.setImageResource(icon)
         }
     }
     private suspend fun getLikedPlayListObserver(){
@@ -209,6 +221,7 @@ class PlayedSongBottomSheet:
             }
             playPauseImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.PausePlay)
+                Log.d("PLAYER_PLAYED_BOTTOM","✅ After cycle: playpause=${playerViewModel.playbackState.value.isPlaying}")
             }
             nextSongImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.Next)
@@ -226,7 +239,8 @@ class PlayedSongBottomSheet:
                 likedPlayedList?.let { setIfPlayedAudioLikedOrNot(it) }
             }
             playedModeImage.setOnClickListener {
-                setPlayedModeState()
+                playerViewModel.getEvent(PlayerEvents.CycleShuffleRepeat)
+                Log.d("PLAYER_PLAYED_BOTTOM","✅ After cycle: shuffle=${playerViewModel.playbackState.value.isShufflingClicked}, repeat=${playerViewModel.playbackState.value.isRepeatingClicked}")
             }
             listImage.setOnClickListener {
                 showAllSongsBottomSheet()

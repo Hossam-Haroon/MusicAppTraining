@@ -359,6 +359,7 @@ class PlaybackViewModel @Inject constructor(
                 PlayerEvents.SeekBackward -> seekBackward()
                 PlayerEvents.SeekForward -> seekForward()
                 PlayerEvents.Shuffle -> shuffleButtonClicked()
+                PlayerEvents.CycleShuffleRepeat -> {}
             }
         }catch (e:Exception){
             Log.e("PlaybackViewModel", "Error handling player event", e)

@@ -1,5 +1,6 @@
 package com.example.musicapptraining.data.repositories
 
+import android.util.Log
 import com.example.musicapptraining.data.mediaController.MediaControllerManager
 import com.example.musicapptraining.domain.model.PlaybackProgress
 import com.example.musicapptraining.domain.model.PlaybackState
@@ -29,9 +30,15 @@ class MediaRepositoryImpl @Inject constructor(
     override fun getPositionOfSongInsidePlaylist(id: String) {
         mediaControllerManager.getTrackIndexById(id)
     }
-    override fun observePlaybackState(): Flow<PlaybackState> = mediaControllerManager.playbackState
+    override fun observePlaybackState(): Flow<PlaybackState> {
+        return mediaControllerManager.playbackState
+    }
     override fun observePlaybackProgress(): Flow<PlaybackProgress> {
         return mediaControllerManager.playbackProgress
     }
     override fun observeCurrentSong(): Flow<Song> = mediaControllerManager.currentSong
+    override fun cycleShuffleRepeat() {
+        mediaControllerManager.cycleShuffleRepeat()
+        Log.d("PLAYER_REPO","${mediaControllerManager.playbackState.value.isShufflingClicked}")
+    }
 }
