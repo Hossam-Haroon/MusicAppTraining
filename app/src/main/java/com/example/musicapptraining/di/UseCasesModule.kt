@@ -21,8 +21,6 @@ import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.Seek
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekToTrackUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SetSongToPlayNextUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.TogglePlaybackUseCase
-import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ToggleRepeatUseCase
-import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ToggleShuffleUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.AddNewPlaylistUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.AddSongToPlaylistUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.DeleteSongFromPlaylistUseCase
@@ -146,14 +144,6 @@ object UseCasesModule {
     @Provides
     fun setSongToPlayNext(mediaRepository: MediaRepository):SetSongToPlayNextUseCase{
         return SetSongToPlayNextUseCase(mediaRepository)
-    }
-    @Provides
-    fun toggleRepeat(mediaRepository: MediaRepository):ToggleRepeatUseCase{
-        return ToggleRepeatUseCase(mediaRepository)
-    }
-    @Provides
-    fun toggleShuffle(mediaRepository: MediaRepository):ToggleShuffleUseCase{
-        return ToggleShuffleUseCase(mediaRepository)
     }
     @Provides
     fun getPositionOfSongInsidePlaylist(

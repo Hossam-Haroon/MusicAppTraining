@@ -13,7 +13,7 @@ import com.example.musicapptraining.presentation.fragments.baseFragment.BaseFrag
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.setAdapterData

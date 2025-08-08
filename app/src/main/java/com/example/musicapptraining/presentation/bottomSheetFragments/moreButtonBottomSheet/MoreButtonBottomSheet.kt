@@ -12,7 +12,7 @@ import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.addToPlayListBottomSheet.AddToPlayListBottomSheetFragment
 import com.example.musicapptraining.presentation.fragments.homeFragment.HomeFragmentDirections
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.getParcelableCompat
 import dagger.hilt.android.AndroidEntryPoint

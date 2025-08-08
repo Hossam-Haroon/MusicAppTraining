@@ -1,8 +1,6 @@
-package com.example.musicapptraining.presentation.PlayerControllerViewModel
+package com.example.musicapptraining.presentation.playerControllerViewModel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.musicapptraining.domain.model.PlaybackProgress
 import com.example.musicapptraining.domain.model.PlaybackState
@@ -21,15 +19,10 @@ import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.Seek
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SeekToTrackUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.SetSongToPlayNextUseCase
 import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.TogglePlaybackUseCase
-import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ToggleRepeatUseCase
-import com.example.musicapptraining.domain.usecases.mediaControllerUseCases.ToggleShuffleUseCase
 import com.example.musicapptraining.utilities.PlayerEvents
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,8 +31,6 @@ class PlayerControllerViewModel @Inject constructor(
     private val seekToPositionUseCase: SeekToPositionUseCase,
     private val seekToNextTrackUseCase: SeekToNextTrackUseCase,
     private val seekToPreviousTrackUseCase: SeekToPreviousTrackUseCase,
-    private val toggleShuffleUseCase: ToggleShuffleUseCase,
-    private val toggleRepeatUseCase: ToggleRepeatUseCase,
     private val addPlaylistUseCase: AddPlaylistToPlayerUseCase,
     private val clearPlaylistUseCase: ClearPlayerUseCase,
     private val seekToTrackUseCase: SeekToTrackUseCase,
@@ -51,13 +42,11 @@ class PlayerControllerViewModel @Inject constructor(
     val reconnectIfNeededUseCase: ReconnectIfNeededUseCase,
     mediaRepository: MediaRepository
 ):ViewModel() {
-    private var _playbackState = MutableStateFlow(PlaybackState())
-    val playbackState = _playbackState.asStateFlow()
-    /*val playbackState = mediaRepository.observePlaybackState().stateIn(
+    val playbackState = mediaRepository.observePlaybackState().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = PlaybackState()
-        )*/
+        )
     val playbackProgress = mediaRepository.observePlaybackProgress()
         .stateIn(
             scope = viewModelScope,
@@ -73,13 +62,6 @@ class PlayerControllerViewModel @Inject constructor(
                 0,null,""
             )
         )
-    init {
-        viewModelScope.launch {
-            mediaRepository.observePlaybackState().collect{
-                _playbackState.value = it
-            }
-        }
-    }
     fun getEvent(event:PlayerEvents){
         when(event){
             is PlayerEvents.AddPlayList -> addPlaylistUseCase(event.songs)
@@ -92,15 +74,9 @@ class PlayerControllerViewModel @Inject constructor(
             PlayerEvents.Next -> seekToNextTrackUseCase()
             PlayerEvents.PausePlay -> togglePlaybackUseCase()
             PlayerEvents.Previous -> seekToPreviousTrackUseCase()
-            PlayerEvents.Repeat -> toggleRepeatUseCase()
             PlayerEvents.SeekBackward -> seekBackwardUseCase()
             PlayerEvents.SeekForward -> seekForwardUseCase()
-            PlayerEvents.Shuffle -> toggleShuffleUseCase()
-            PlayerEvents.CycleShuffleRepeat -> {
-                Log.d("PLAYER_VM","▶️ CycleShuffleRepeat in VM")
-                Log.d("PLAYER_VM","${playbackState.value.isShufflingClicked}")
-                cycleShuffleRepeatUseCase()
-            }
+            PlayerEvents.CycleShuffleRepeat -> cycleShuffleRepeatUseCase()
         }
     }
 }

@@ -28,8 +28,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -62,29 +64,19 @@ class MediaControllerManager @Inject constructor(
         clearJobs()
     }
     fun cycleShuffleRepeat() {
-        val s = _playbackState.value
-        Log.d("PLAYER_MGR","🔁 Before cycle: shuffle=${s.isShufflingClicked}, repeat=${s.isRepeatingClicked}")
+        val playbackState = _playbackState.value
         when {
-            !s.isShufflingClicked && !s.isRepeatingClicked -> {
-                // OFF → SHUFFLE
+            !playbackState.isShufflingClicked && !playbackState.isRepeatingClicked -> {
                 mediaController?.shuffleModeEnabled = true
-                _playbackState.value = s.copy(isShufflingClicked = true)
             }
-            s.isShufflingClicked -> {
-                // SHUFFLE → REPEAT_ONE
+            playbackState.isShufflingClicked -> {
                 mediaController?.shuffleModeEnabled = false
-                mediaController?.repeatMode      = Player.REPEAT_MODE_ONE
-                _playbackState.value = s.copy(isShufflingClicked = false,
-                    isRepeatingClicked = true)
+                mediaController?.repeatMode = Player.REPEAT_MODE_ONE
             }
-            else /* isRepeatingClicked */ -> {
-                // REPEAT_ONE → OFF
+            else -> {
                 mediaController?.repeatMode = Player.REPEAT_MODE_OFF
-                _playbackState.value = s.copy(isRepeatingClicked = false)
             }
         }
-        val after = _playbackState.value
-        Log.d("PLAYER_MGR","✅ After cycle: shuffle=${after.isShufflingClicked}, repeat=${after.isRepeatingClicked}")
     }
     private fun initializeService() {
         val intent = Intent(applicationContext, MusicService::class.java)
@@ -106,7 +98,6 @@ class MediaControllerManager @Inject constructor(
                     applicationContext,
                     ComponentName(applicationContext, MusicService::class.java)
                 )
-                Log.e("checkMediaController", "loading mediaController")
                 mediaControllerFuture = MediaController
                     .Builder(applicationContext,sessionToken)
                     .buildAsync()
@@ -127,7 +118,6 @@ class MediaControllerManager @Inject constructor(
                 mediaController?.let { controller ->
                     connectionRetryCount = 0
                     controller.addListener(PlayerListener(controller))
-                    Log.e("checkMediaController", "mediaController connection successful")
                     if (controller.playbackState == Player.STATE_IDLE) {
                         controller.prepare()
                     }
@@ -173,36 +163,6 @@ class MediaControllerManager @Inject constructor(
      fun clearPlayer() {
         mediaController?.stop()
         mediaController?.clearMediaItems()
-    }
-     fun shuffleButtonClicked() {
-        when(_playbackState.value.isShufflingClicked){
-            true ->{
-                _playbackState.value = _playbackState.value.copy(isShufflingClicked = false)
-                mediaController?.shuffleModeEnabled = _playbackState.value.isShufflingClicked
-                Log.d("checkModeMediaController","shuffle:${playbackState.value.isShufflingClicked}")
-                Log.d("checkModeMediaController","mediaController shuffle:${mediaController?.shuffleModeEnabled}")
-            }
-            else ->{
-                _playbackState.value = _playbackState.value.copy(isShufflingClicked = true)
-                mediaController?.shuffleModeEnabled = _playbackState.value.isShufflingClicked
-                Log.d("checkModeMediaController","shuffle:${playbackState.value.isShufflingClicked}")
-                Log.d("checkModeMediaController","mediaController shuffle:${mediaController?.shuffleModeEnabled}")
-            }
-        }
-    }
-     fun repeatButtonClicked() {
-        when(_playbackState.value.isRepeatingClicked){
-            true -> {
-                _playbackState.value = _playbackState.value.copy(isRepeatingClicked = false)
-                mediaController?.repeatMode = Player.REPEAT_MODE_OFF
-                Log.d("checkMode","repeat:${playbackState.value.isRepeatingClicked}")
-            }
-            else->{
-                _playbackState.value = _playbackState.value.copy(isRepeatingClicked = true)
-                mediaController?.repeatMode = Player.REPEAT_MODE_ONE
-                Log.d("checkMode","repeat:${playbackState.value.isRepeatingClicked}")
-            }
-        }
     }
      fun seekToNextItem() {
         mediaController?.let {
@@ -262,7 +222,7 @@ class MediaControllerManager @Inject constructor(
         scope.launch {
             if (mediaController == null) {
                 reconnectIfNeeded()
-                delay(1000) // Wait for potential reconnection
+                delay(1000)
             }
             waitForMediaController()
             mediaController?.let {controller->
@@ -277,7 +237,6 @@ class MediaControllerManager @Inject constructor(
                 controller.addMediaItems(mediaItems)
                 controller.prepare()
                 controller.pause()
-                Log.d("PlaybackViewModel", "Playlist added to player and prepared.")
             } ?: Log.e(
                 "PlaybackViewModel",
                 "MediaController is null, cannot add playlist."
@@ -307,10 +266,6 @@ class MediaControllerManager @Inject constructor(
             setPlaybackStateCases(playbackState,mediaController)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            Log.d(
-                "PlayerListener",
-                "onMediaItemTransition: MediaItem changed. Reason: $reason"
-            )
             if (reason == MEDIA_ITEM_TRANSITION_REASON_AUTO ||
                 reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
                 _playbackProgress.value = _playbackProgress.value.copy(
@@ -335,9 +290,17 @@ class MediaControllerManager @Inject constructor(
                         currentMediaDurationInMs = duration
                     )
                     _currentSong.value = _currentSong.value.copy(songDuration = duration)
-                    Log.d("checkDuration", "Duration updated: $duration")
                 }
             }
+        }
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+            _playbackState.value = _playbackState.value.copy(
+                isShufflingClicked = shuffleModeEnabled
+            )
+        }
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            val isRepeating = repeatMode == Player.REPEAT_MODE_ONE
+            _playbackState.value = _playbackState.value.copy(isRepeatingClicked = isRepeating)
         }
     }
     private fun startProgressTracking(){
@@ -380,14 +343,9 @@ class MediaControllerManager @Inject constructor(
                     currentMediaProgressInMs = 0L,
                     currentMediaDurationInMs = 0L
                 )
-                _playbackState.value = _playbackState.value.copy(isBuffering = false)
             }
-            Player.STATE_BUFFERING ->_playbackState.value = _playbackState.value.copy(
-                isBuffering = true
-            )
-            Player.STATE_READY ->_playbackState.value = _playbackState.value.copy(
-                isBuffering = false
-            )
+            Player.STATE_BUFFERING ->{}
+            Player.STATE_READY -> {}
         }
     }
     private fun setSongToPlayNextHandle(reason: Int){

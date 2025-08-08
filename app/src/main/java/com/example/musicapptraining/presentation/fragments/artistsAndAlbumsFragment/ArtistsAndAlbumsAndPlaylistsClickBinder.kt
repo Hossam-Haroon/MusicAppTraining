@@ -5,7 +5,7 @@ import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.SortOptionBottomSheetHandler
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 
 class ArtistsAndAlbumsAndPlaylistsClickBinder(

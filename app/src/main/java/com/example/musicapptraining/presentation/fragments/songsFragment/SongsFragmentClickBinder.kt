@@ -2,7 +2,7 @@ package com.example.musicapptraining.presentation.fragments.songsFragment
 
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.example.musicapptraining.databinding.FragmentSongsBinding
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayerEvents

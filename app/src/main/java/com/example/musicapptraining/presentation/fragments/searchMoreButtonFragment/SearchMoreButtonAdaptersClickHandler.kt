@@ -3,7 +3,7 @@ package com.example.musicapptraining.presentation.fragments.searchMoreButtonFrag
 import androidx.navigation.NavController
 import com.example.musicapptraining.presentation.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.presentation.navigation.DefaultMediaNavigator
 import com.example.musicapptraining.presentation.navigation.NavigableMedia
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler

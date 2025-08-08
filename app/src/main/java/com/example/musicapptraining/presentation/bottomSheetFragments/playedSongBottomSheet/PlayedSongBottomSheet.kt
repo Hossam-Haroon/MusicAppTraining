@@ -17,14 +17,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.musicapptraining.R
 import com.example.musicapptraining.databinding.FragmentPlayedSongBottomSheetBinding
-import com.example.musicapptraining.domain.model.PlaybackState
 import com.example.musicapptraining.domain.model.Playlist
 import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.presentation.bottomSheetFragments.baseBottomSheet.BaseBottomSheetDialogFragment
 import com.example.musicapptraining.presentation.bottomSheetFragments.allSongsBottomSheet.AllSongsBottomSheet
 import com.example.musicapptraining.presentation.bottomSheetFragments.moreButtonBottomSheet.MoreButtonBottomSheet
 import com.example.musicapptraining.presentation.fragments.playlistFragment.PlaylistViewModel
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.formatDuration
 import com.example.musicapptraining.utilities.getParcelableCompat
@@ -51,7 +50,6 @@ class PlayedSongBottomSheet:
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpViewModelObserving()
-        //setupUi(playerViewModel.playbackState.value)
         setUpClickListeners()
     }
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -83,7 +81,6 @@ class PlayedSongBottomSheet:
     }
     private suspend fun observePlayerState() {
         playerViewModel.playbackState.collect { state ->
-            Log.d("PLAYBACK_STATE", "cycleClicked? shuffle=${state.isShufflingClicked} repeat=${state.isRepeatingClicked}")
             val icon = when {
                 state.isRepeatingClicked -> R.drawable.loop_1
                 state.isShufflingClicked  -> R.drawable.shuffle
@@ -111,15 +108,12 @@ class PlayedSongBottomSheet:
             binding.currentSongProgressTv.text = formatDuration(
                 playbackProgress.currentMediaProgressInMs
             )
-            binding.musicProgressSeekbar.progress =
-                playbackProgress.currentMediaProgressInMs.toInt()
+            binding.musicProgressSeekbar.progress= playbackProgress.currentMediaProgressInMs.toInt()
         }
     }
     private suspend fun setMediaDurationInMsObserver(){
         playerViewModel.playbackProgress.collect{playbackProgress->
-            binding.fullSongLengthTv.text = formatDuration(
-                playbackProgress.currentMediaDurationInMs
-            )
+            binding.fullSongLengthTv.text = formatDuration(playbackProgress.currentMediaDurationInMs)
             binding.musicProgressSeekbar.max = playbackProgress.currentMediaDurationInMs.toInt()
         }
     }
@@ -137,10 +131,7 @@ class PlayedSongBottomSheet:
     }
     private suspend fun setCurrentSongObserver(){
         playerViewModel.currentSong.collect{ currentSong->
-            Log.d(CHECK_CURRENT_SONG,"$currentSong")
-            Log.d("STATE_FLOW", "current song to: ${currentSong.songName}")
             setSongDetailsAfterCollectingCurrentSong(currentSong)
-
         }
     }
     private suspend fun addSongToPlaylistUiStateObserver(){
@@ -154,9 +145,7 @@ class PlayedSongBottomSheet:
                         color = R.color.main_color
                     )
                 },
-                errorState = {message->
-                    Toast.makeText(context,message,Toast.LENGTH_LONG).show()
-                }
+                errorState = {message-> Toast.makeText(context,message,Toast.LENGTH_LONG).show() }
             )
         }
     }
@@ -181,31 +170,18 @@ class PlayedSongBottomSheet:
         binding.apply {
             songNameTv.text = currentSong.songName
             songArtistTv.text = currentSong.songArtist
-            Log.d(
-                SEEK_DURATION,
-                formatDuration(
-                    playerViewModel.playbackProgress.value.currentMediaDurationInMs
-                )
-            )
             currentSongProgressTv.text =
-                formatDuration(
-                    playerViewModel.playbackProgress.value.currentMediaProgressInMs
-                )
+                formatDuration(playerViewModel.playbackProgress.value.currentMediaProgressInMs)
             fullSongLengthTv.text =
-                formatDuration(
-                    playerViewModel.playbackProgress.value.currentMediaDurationInMs
-                )
+                formatDuration(playerViewModel.playbackProgress.value.currentMediaDurationInMs)
             try {
                 imageView3.setImageURI(
                     currentSong.songArt?.toUri()
                 )
-                Log.d(SONG_ART_CHECK, "Album art found and set")
+                Log.d("SONG_ART_CHECK","${currentSong.songArt}")
             }catch (e:Exception){
                 imageView3.setImageResource(R.drawable.songicon)
-                Log.d(
-                    SONG_ART_CHECK,
-                    "album art not found: ${e.message}"
-                )
+                Log.d(SONG_ART_CHECK, "album art not found: ${e.message}")
             }
             musicProgressSeekbar.progress =
                 playerViewModel.playbackProgress.value.currentMediaProgressInMs.toInt()
@@ -221,7 +197,6 @@ class PlayedSongBottomSheet:
             }
             playPauseImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.PausePlay)
-                Log.d("PLAYER_PLAYED_BOTTOM","✅ After cycle: playpause=${playerViewModel.playbackState.value.isPlaying}")
             }
             nextSongImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.Next)
@@ -240,7 +215,6 @@ class PlayedSongBottomSheet:
             }
             playedModeImage.setOnClickListener {
                 playerViewModel.getEvent(PlayerEvents.CycleShuffleRepeat)
-                Log.d("PLAYER_PLAYED_BOTTOM","✅ After cycle: shuffle=${playerViewModel.playbackState.value.isShufflingClicked}, repeat=${playerViewModel.playbackState.value.isRepeatingClicked}")
             }
             listImage.setOnClickListener {
                 showAllSongsBottomSheet()
@@ -285,48 +259,6 @@ class PlayedSongBottomSheet:
     private fun showAllSongsBottomSheet(){
         AllSongsBottomSheet().show(parentFragmentManager,tag)
     }
-    private fun setupUi(state:PlaybackState){
-        binding.apply {
-            when{
-                state.isShufflingClicked ->{
-                    playedModeImage.setImageResource(R.drawable.shuffle)
-                }
-                state.isRepeatingClicked ->{
-                    playedModeImage.setImageResource(R.drawable.loop_1)
-                }
-                else ->{
-                    playedModeImage.setImageResource(R.drawable.loop_list)
-                }
-            }
-        }
-    }
-    private fun setPlayedModeState() {
-        val currentState = playerViewModel.playbackState.value
-        Log.d(
-            "BEFORE_CLICK",
-            "shuffle: ${currentState.isShufflingClicked}, repeat: ${currentState.isRepeatingClicked}"
-        )
-        when {
-            currentState.isShufflingClicked -> {
-                Log.d("CLICK_ACTION", "Shuffle is true, calling shuffle and repeat events")
-                playerViewModel.getEvent(PlayerEvents.Shuffle)
-                playerViewModel.getEvent(PlayerEvents.Repeat)
-                binding.playedModeImage.setImageResource(R.drawable.loop_1)
-            }
-            currentState.isRepeatingClicked -> {
-                Log.d("CLICK_ACTION", "Repeat is true, calling repeat event")
-                playerViewModel.getEvent(PlayerEvents.Repeat)
-                binding.playedModeImage.setImageResource(R.drawable.loop_list)
-            }
-            else -> {
-                Log.d("CLICK_ACTION", "Both false, calling shuffle event")
-                playerViewModel.getEvent(PlayerEvents.Shuffle)
-                binding.playedModeImage.setImageResource(R.drawable.shuffle)
-            }
-        }
-        val afterState = playerViewModel.playbackState.value
-        Log.d("AFTER_CLICK", "shuffle: ${afterState.isShufflingClicked}, repeat: ${afterState.isRepeatingClicked}")
-    }
     private fun showMoreButtonBottomSheet(){
         val moreButtonBottomSheet = MoreButtonBottomSheet.newInstance(song)
         moreButtonBottomSheet.show(parentFragmentManager,tag)
@@ -352,9 +284,7 @@ class PlayedSongBottomSheet:
         }
     }
     companion object{
-        const val CHECK_CURRENT_SONG = "checkCurrentSong"
         const val SONG_ART_CHECK = "songArtCheck"
-        const val SEEK_DURATION = "seekDuration"
         const val LIKED_PLAYLIST = "likedPlayList"
         const val SONG_REQUIRED = "song required"
         const val ARG_SONG = "song"

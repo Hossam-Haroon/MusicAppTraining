@@ -10,8 +10,6 @@ interface MediaRepository {
     fun seekTo(position: Long)
     fun seekToNext()
     fun seekToPrevious()
-    fun toggleShuffle()
-    fun toggleRepeat()
     fun addPlaylist(songs: List<Song>)
     fun clearPlaylist()
     fun seekToItem(index: Int)

@@ -18,12 +18,13 @@ import com.example.musicapptraining.presentation.bottomSheetFragments.moreButton
 import com.example.musicapptraining.presentation.bottomSheetFragments.playedSongBottomSheet.PlayedSongBottomSheet
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongsViewModel
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 import com.example.musicapptraining.utilities.handleUiState
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -34,6 +35,21 @@ class AllSongsBottomSheet :
     private val playerViewModel : PlayerControllerViewModel by activityViewModels()
     private val songViewModel : SongsViewModel by activityViewModels()
     private val songAdapter by lazy { SongAdapter() }
+    private var wasPlayingBeforeNavigation = false
+    override fun onStart() {
+        super.onStart()
+        wasPlayingBeforeNavigation = playerViewModel.playbackState.value.isPlaying
+    }
+    override fun onResume() {
+        super.onResume()
+         if(wasPlayingBeforeNavigation && playerViewModel.playbackState.value.isPlaying){
+            lifecycleScope.launch {
+                delay(100)
+                playerViewModel.getEvent(PlayerEvents.PausePlay)
+            }
+        }
+        wasPlayingBeforeNavigation = false
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setAdapter()

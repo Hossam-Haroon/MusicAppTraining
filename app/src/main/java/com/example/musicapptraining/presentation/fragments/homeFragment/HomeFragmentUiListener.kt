@@ -5,7 +5,7 @@ import androidx.navigation.NavController
 import com.example.musicapptraining.R
 import com.example.musicapptraining.databinding.FragmentHomeBinding
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.PlayerEvents
 
 class HomeFragmentUiListener(

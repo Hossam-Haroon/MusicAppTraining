@@ -7,7 +7,7 @@ import androidx.navigation.NavController
 import com.example.musicapptraining.databinding.FragmentSearchBinding
 import com.example.musicapptraining.presentation.fragments.artistFragment.ArtistAdapter
 import com.example.musicapptraining.presentation.fragments.songsFragment.SongAdapter
-import com.example.musicapptraining.presentation.PlayerControllerViewModel.PlayerControllerViewModel
+import com.example.musicapptraining.presentation.playerControllerViewModel.PlayerControllerViewModel
 import com.example.musicapptraining.utilities.MoreButtonBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayedSongBottomSheetHandler
 import com.example.musicapptraining.utilities.PlayerEvents
