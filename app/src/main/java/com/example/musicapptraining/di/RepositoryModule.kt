@@ -8,6 +8,10 @@ import com.example.musicapptraining.data.repositories.MediaRepositoryImpl
 import com.example.musicapptraining.data.repositories.PlaylistRepositoryImpl
 import com.example.musicapptraining.data.repositories.SongRepositoryImpl
 import com.example.musicapptraining.data.source.MusicDao
+import com.example.musicapptraining.domain.utils.DataFetcher
+import com.example.musicapptraining.domain.model.Album
+import com.example.musicapptraining.domain.model.Artist
+import com.example.musicapptraining.domain.model.Song
 import com.example.musicapptraining.domain.repositories.AlbumRepository
 import com.example.musicapptraining.domain.repositories.ArtistRepository
 import com.example.musicapptraining.domain.repositories.MediaRepository
@@ -26,19 +30,26 @@ import dagger.hilt.components.SingletonComponent
 object RepositoryModule {
 
     @Provides
-    fun songRepository(musicDao: MusicDao, @ApplicationContext context: Context): SongRepository{
-        return SongRepositoryImpl(musicDao,context)
+    fun songRepository(
+        musicDao: MusicDao,
+        @ApplicationContext context: Context,
+        audioFetcher: DataFetcher<Song>
+    ): SongRepository{
+        return SongRepositoryImpl(musicDao,context,audioFetcher)
     }
     @Provides
     fun artistRepository(
         musicDao: MusicDao,
-        @ApplicationContext context: Context
+        artistFetcher: DataFetcher<Artist>
     ): ArtistRepository {
-        return ArtistRepositoryImpl(musicDao, context)
+        return ArtistRepositoryImpl(musicDao, artistFetcher)
     }
     @Provides
-    fun albumRepository(musicDao: MusicDao, @ApplicationContext context: Context): AlbumRepository{
-        return AlbumRepositoryImpl(musicDao, context)
+    fun albumRepository(
+        musicDao: MusicDao,
+        albumFetcher: DataFetcher<Album>
+    ): AlbumRepository{
+        return AlbumRepositoryImpl(musicDao, albumFetcher)
     }
     @Provides
     fun playlistRepository(

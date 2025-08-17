@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.musicapptraining.domain.model.Album
 import com.example.musicapptraining.domain.model.Artist
 import com.example.musicapptraining.domain.model.Playlist
-import com.example.musicapptraining.domain.usecases.songUseCases.GetAlbumSongsUseCase
-import com.example.musicapptraining.domain.usecases.songUseCases.GetArtistSongsUseCase
-import com.example.musicapptraining.domain.usecases.songUseCases.GetPlaylistSongsUseCase
+import com.example.musicapptraining.domain.usecases.albumUseCases.GetAlbumSongsUseCase
+import com.example.musicapptraining.domain.usecases.artistUseCases.GetArtistSongsUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.GetPlaylistSongsUseCase
 import com.example.musicapptraining.utilities.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +18,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ArtistAndAlbumViewModel @Inject constructor(
-   private val getArtistSongsUseCase: GetArtistSongsUseCase,
-   private val getAlbumSongsUseCase: GetAlbumSongsUseCase,
-   private val getPlaylistSongsUseCase: GetPlaylistSongsUseCase
+    private val getArtistSongsUseCase: GetArtistSongsUseCase,
+    private val getAlbumSongsUseCase: GetAlbumSongsUseCase,
+    private val getPlaylistSongsUseCase: GetPlaylistSongsUseCase
 ): ViewModel() {
     private var _artistAudioList : MutableStateFlow<UiState<Artist>> =
         MutableStateFlow(UiState.Loading)

@@ -1,13 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    //id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("kotlin-kapt")
-    id ("kotlin-parcelize")
+    id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
-    //id("androidx.room")
-
+    id("jacoco")
 }
 
 android {
@@ -54,6 +52,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.legacy.support.v4)
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
@@ -113,5 +112,19 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment:2.8.1")
     implementation("androidx.navigation:navigation-ui:2.8.1")
 
+    //testing
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.0-M1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.12.0-M1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
+    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation("com.google.truth:truth:1.4.2")
+    testImplementation("io.insert-koin:koin-test:4.0.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
+
+
+}
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

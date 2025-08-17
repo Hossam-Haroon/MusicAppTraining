@@ -27,10 +27,10 @@ import com.example.musicapptraining.domain.usecases.playlistUseCases.DeleteSongF
 import com.example.musicapptraining.domain.usecases.playlistUseCases.GetAllPlaylistsUseCase
 import com.example.musicapptraining.domain.usecases.playlistUseCases.GetLikedPlaylistUseCase
 import com.example.musicapptraining.domain.usecases.songUseCases.CheckAndRefreshUseCase
-import com.example.musicapptraining.domain.usecases.songUseCases.GetAlbumSongsUseCase
+import com.example.musicapptraining.domain.usecases.albumUseCases.GetAlbumSongsUseCase
 import com.example.musicapptraining.domain.usecases.songUseCases.GetAllSongsUseCase
-import com.example.musicapptraining.domain.usecases.songUseCases.GetArtistSongsUseCase
-import com.example.musicapptraining.domain.usecases.songUseCases.GetPlaylistSongsUseCase
+import com.example.musicapptraining.domain.usecases.artistUseCases.GetArtistSongsUseCase
+import com.example.musicapptraining.domain.usecases.playlistUseCases.GetPlaylistSongsUseCase
 import com.example.musicapptraining.domain.usecases.songUseCases.SearchSongUseCase
 import dagger.Module
 import dagger.Provides
@@ -50,16 +50,16 @@ object UseCasesModule {
         return SearchSongUseCase(songRepository)
     }
     @Provides
-    fun getAlbumSongs(songRepository: SongRepository):GetAlbumSongsUseCase{
-        return GetAlbumSongsUseCase(songRepository)
+    fun getAlbumSongs(albumRepository: AlbumRepository): GetAlbumSongsUseCase {
+        return GetAlbumSongsUseCase(albumRepository)
     }
     @Provides
-    fun getArtistSongs(songRepository: SongRepository):GetArtistSongsUseCase{
-        return GetArtistSongsUseCase(songRepository)
+    fun getArtistSongs(artistRepository: ArtistRepository): GetArtistSongsUseCase {
+        return GetArtistSongsUseCase(artistRepository)
     }
     @Provides
-    fun getPlaylistSongs(songRepository: SongRepository):GetPlaylistSongsUseCase{
-        return GetPlaylistSongsUseCase(songRepository)
+    fun getPlaylistSongs(playlistRepository: PlaylistRepository): GetPlaylistSongsUseCase {
+        return GetPlaylistSongsUseCase(playlistRepository)
     }
     @Provides
     fun checkAndRefresh(songRepository: SongRepository):CheckAndRefreshUseCase{

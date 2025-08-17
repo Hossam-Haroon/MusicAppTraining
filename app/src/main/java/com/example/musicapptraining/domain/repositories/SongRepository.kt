@@ -10,8 +10,5 @@ import kotlinx.coroutines.flow.Flow
 interface SongRepository {
     fun getAllSongs(): Flow<List<Song>>
     fun searchSong(songName : String): Flow<List<Song>>
-    fun getAlbumSongs(albumName : String): Flow<Album>
-    fun getArtistSongs(artistName: String): Flow<Artist>
-    fun getPlaylistSongs(playListSong : String): Flow<Playlist?>
     suspend fun checkAndRefresh(): List<Song>
 }

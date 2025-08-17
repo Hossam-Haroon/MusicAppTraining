@@ -60,6 +60,9 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
         return defaultPlaylists
     }
+    override fun getPlaylistSongs(playListSong: String): Flow<Playlist?> {
+        return musicDao.getPlayListByName(playListSong).map { it?.toDomain() }
+    }
     companion object{
         private const val PLAYLIST_REPOSITORY = "playlist repository"
         private const val LIKED_AUDIOS = "liked"

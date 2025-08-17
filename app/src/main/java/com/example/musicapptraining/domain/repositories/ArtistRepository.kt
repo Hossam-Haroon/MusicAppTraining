@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface ArtistRepository {
     fun getArtists(): Flow<List<Artist>>
     fun searchArtistByName(text : String): Flow<List<Artist>>
-    //suspend fun insertArtist(artistName: String)
+    fun getArtistSongs(artistName: String): Flow<Artist>
+
 
 }
